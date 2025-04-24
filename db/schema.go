@@ -4,39 +4,39 @@ import (
 	"fmt"
 )
 
-func setUp() error {
+func SetUp(cm *ConnectionManager) error {
 
-	err := createDocumentTable()
+	err := createDocumentTable(cm)
 	if err != nil {
 		return fmt.Errorf("error creating documents table: %w", err)
 	}
 
-	err = createPersonsTable()
+	err = createPersonsTable(cm)
 	if err != nil {
 		return fmt.Errorf("error creating persons table: %w", err)
 	}
 
-	err = createUsersTable()
+	err = createUsersTable(cm)
 	if err != nil {
 		return fmt.Errorf("error creating users table: %w", err)
 	}
 
-	err = createOwnershipTable()
+	err = createOwnershipTable(cm)
 	if err != nil {
 		return fmt.Errorf("error creating ownership table: %w", err)
 	}
 
-	err = createAuthorshipTable()
+	err = createAuthorshipTable(cm)
 	if err != nil {
 		return fmt.Errorf("error creating authorship table: %w", err)
 	}
 
-	err = createTagsTable()
+	err = createTagsTable(cm)
 	if err != nil {
 		return fmt.Errorf("error creating tags table: %w", err)
 	}
 
-	err = createTaggingTable()
+	err = createTaggingTable(cm)
 	if err != nil {
 		return fmt.Errorf("error creating tagging table: %w", err)
 	}
@@ -44,8 +44,8 @@ func setUp() error {
 	return nil
 }
 
-func createDocumentTable() error {
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS documents (
+func createDocumentTable(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS documents (
 		id uuid NOT NULL,
 		title TEXT NOT NULL,
 		date TEXT,
@@ -56,8 +56,8 @@ func createDocumentTable() error {
 	return err
 }
 
-func createPersonsTable() error {
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS persons (
+func createPersonsTable(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS persons (
 		id uuid NOT NULL,
 		name TEXT NOT NULL,
 		metadata JSONB,
@@ -67,8 +67,8 @@ func createPersonsTable() error {
 	return err
 }
 
-func createUsersTable() error {
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS users (
+func createUsersTable(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS users (
 		id uuid NOT NULL,
 		name TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
@@ -79,8 +79,8 @@ func createUsersTable() error {
 	return err
 }
 
-func createOwnershipTable() error {
-	_, err := DB.Exec(`DO $$ BEGIN
+func createOwnershipTable(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`DO $$ BEGIN
 			CREATE TYPE role_enum  AS ENUM 
 			('owner', 'editor', 'viewer');
 		EXCEPTION
@@ -91,7 +91,7 @@ func createOwnershipTable() error {
 		return fmt.Errorf("error creating role_enum: %w", err)
 	}
 
-	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS ownership (
+	_, err = cm.DB.Exec(`CREATE TABLE IF NOT EXISTS ownership (
 		user_id uuid NOT NULL,
 		document_id uuid NOT NULL,
 		role role_enum NOT NULL,
@@ -103,8 +103,8 @@ func createOwnershipTable() error {
 	return err
 }
 
-func createAuthorshipTable() error {
-	_, err := DB.Exec(`DO $$ BEGIN
+func createAuthorshipTable(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`DO $$ BEGIN
 		CREATE TYPE
 			authorship_enum AS ENUM
 			('author', 'subject', 'recipient');
@@ -115,7 +115,7 @@ func createAuthorshipTable() error {
 		return fmt.Errorf("error creating authorship_enum: %w", err)
 	}
 
-	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS authorship (
+	_, err = cm.DB.Exec(`CREATE TABLE IF NOT EXISTS authorship (
 		person_id uuid NOT NULL,
 		document_id uuid NOT NULL,
 		role authorship_enum NOT NULL,
@@ -126,8 +126,8 @@ func createAuthorshipTable() error {
 	return err
 }
 
-func createTagsTable() error {
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS tags (
+func createTagsTable(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS tags (
 		id SERIAL NOT NULL,
 		tag TEXT NOT NULL UNIQUE,
 		PRIMARY KEY (id)
@@ -136,8 +136,8 @@ func createTagsTable() error {
 	return err
 }
 
-func createTaggingTable() error {
-	_, err := DB.Exec(`CREATE TABLE IF NOT EXISTS document_tags (
+func createTaggingTable(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS document_tags (
 		document_id uuid NOT NULL,
 		tag_id SERIAL NOT NULL,
 		PRIMARY KEY (document_id, tag_id),

@@ -5,15 +5,35 @@ import (
 	"github.com/ryangladden/archivelens-go/handlers"
 )
 
-func SetupRouter() *gin.Engine {
-	router := gin.Default()
-	router.GET("/", func(c *gin.Context) { c.JSON(200, gin.H{"message": "pong"}) })
+type Router struct {
+	userHandler *handlers.UserHandler
+	routes      *gin.Engine
+}
 
-	api := router.Group("/api")
+func NewRouter(userHandler *handlers.UserHandler) *Router {
+	r := gin.Default()
+
+	router := &Router{
+		userHandler: userHandler,
+		routes:      r,
+	}
+
+	router.registerRoutes()
+	return router
+}
+
+func (r *Router) Run(addr string) error {
+	return r.routes.Run(addr)
+}
+
+func (r *Router) registerRoutes() {
+	r.routes.GET("/", func(c *gin.Context) { c.JSON(200, gin.H{"message": "pong"}) })
+
+	api := r.routes.Group("/api")
 	v1 := api.Group("/v1")
 	users := v1.Group("/users")
 	{
-		users.GET("", handlers.CreateUserHandler)
+		users.POST("", r.userHandler.CreateUser)
 		// 	users.PUT("", CreateUser)
 		// 	users.PATCH("", UpdateUser)
 		// 	users.DELETE("", DeleteUser)
@@ -34,5 +54,4 @@ func SetupRouter() *gin.Engine {
 	// 	persons.PATCH("/:id", UpdatePerson)
 	// 	persons.DELETE("/:id", DeletePerson)
 	// }
-	return router
 }

@@ -5,8 +5,8 @@ import (
 	"io"
 
 	// "github.com/ryangladden/archivelens-go/model"
-	// "github.com/ryangladden/archivelens-go/requests"
 	"github.com/gin-gonic/gin"
+	"github.com/ryangladden/archivelens-go/requests"
 	"github.com/ryangladden/archivelens-go/service"
 )
 
@@ -27,4 +27,16 @@ func CreateUserHandler(c *gin.Context) {
 		c.JSON(500, gin.H{"error": "failed to read request body"})
 	}
 	c.JSON(200, gin.H{"message": "pong"})
+}
+
+func (h *UserHandler) CreateUser(c *gin.Context) {
+	var createUserRequest requests.CreateUserRequest
+
+	if err := c.BindJSON(&createUserRequest); err != nil {
+		c.JSON(400, gin.H{"error": "invalid request body"})
+		return
+	}
+	fmt.Sprintf("Name: %s\nPassword: %s\nEmail: %s\n", createUserRequest.Name, createUserRequest.Password, createUserRequest.Email)
+	h.userService.CreateUser(&createUserRequest)
+	c.JSON(201, gin.H{"message": "user created successfully"})
 }

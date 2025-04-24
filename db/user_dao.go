@@ -1,7 +1,7 @@
 package db
 
 import (
-	"database/sql"
+	_ "database/sql"
 	"fmt"
 
 	_ "github.com/lib/pq"
@@ -9,15 +9,15 @@ import (
 )
 
 type UserDAO struct {
-	db *sql.DB
+	cm *ConnectionManager
 }
 
-func NewUserDAO(db *sql.DB) *UserDAO {
-	return &UserDAO{db: db}
+func NewUserDAO(cm *ConnectionManager) *UserDAO {
+	return &UserDAO{cm: cm}
 }
 
-func (h *UserDAO) CreateUser(user *model.User) error {
-	_, err := DB.Exec(`INSERT INTO users
+func (dao *UserDAO) CreateUser(user *model.User) error {
+	_, err := dao.cm.DB.Exec(`INSERT INTO users
 	(id, name, password, email)
 	VALUES ($1, $2, $3, $4)`, user.ID, user.Name, user.Password, user.Email)
 	if err != nil {

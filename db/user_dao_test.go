@@ -7,10 +7,20 @@ import (
 	"github.com/ryangladden/archivelens-go/model"
 )
 
-func TestCreateUser(t *testing.T) {
-	Connect()
+var (
+	cm      *ConnectionManager
+	userDAO *UserDAO
+)
 
-	userDAO := NewUserDAO(DB)
+func TestMain(m *testing.M) {
+	cm = NewConnectionManager("localhost", 5432, "postgres", "postgres", "archive-lens-dev")
+	cm.Connect()
+	SetUp(cm)
+	userDAO = NewUserDAO(cm)
+	m.Run()
+}
+
+func TestCreateUser(t *testing.T) {
 
 	id, err := uuid.NewV7()
 
@@ -27,7 +37,7 @@ func TestCreateUser(t *testing.T) {
 	}
 	// Verify the user was created
 	var createdUser model.User
-	err = DB.QueryRow("SELECT id, name, email, password FROM users WHERE id = $1", user.ID).Scan(&createdUser.ID, &createdUser.Name, &createdUser.Email, &createdUser.Password)
+	err = userDAO.cm.DB.QueryRow("SELECT id, name, email, password FROM users WHERE id = $1", user.ID).Scan(&createdUser.ID, &createdUser.Name, &createdUser.Email, &createdUser.Password)
 	if err != nil {
 		t.Fatalf("Failed to retrieve created user: %v", err)
 	}
@@ -35,17 +45,13 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("Created user does not match expected user: got %+v, want %+v", createdUser, user)
 	}
 	// Clean up the created user
-	_, err = DB.Exec("DELETE FROM users WHERE id = $1", user.ID)
+	_, err = userDAO.cm.DB.Exec("DELETE FROM users WHERE id = $1", user.ID)
 	if err != nil {
 		t.Fatalf("Failed to clean up created user: %v", err)
 	}
 }
 
 func TestCreateExistingEmail(t *testing.T) {
-	Connect()
-
-	userDAO := NewUserDAO(DB)
-
 	id, err := uuid.NewV7()
 	if err != nil {
 		t.Fatalf("Failed to generate UUID: %v", err)
@@ -84,7 +90,7 @@ func TestCreateExistingEmail(t *testing.T) {
 		t.Errorf("Expected error message 'pq: duplicate key value violates unique constraint \"users_email_key\"', got '%v'", err)
 	}
 	// Clean up the created user
-	_, err = DB.Exec("DELETE FROM users WHERE id = $1", user.ID)
+	_, err = userDAO.cm.DB.Exec("DELETE FROM users WHERE id = $1", user.ID)
 	if err != nil {
 		t.Fatalf("Failed to clean up created user: %v", err)
 	}

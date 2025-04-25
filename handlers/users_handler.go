@@ -1,11 +1,10 @@
 package handlers
 
 import (
-	"fmt"
-	"io"
+	"github.com/rs/zerolog/log"
 
-	// "github.com/ryangladden/archivelens-go/model"
 	"github.com/gin-gonic/gin"
+	"github.com/ryangladden/archivelens-go/errs"
 	"github.com/ryangladden/archivelens-go/requests"
 	"github.com/ryangladden/archivelens-go/service"
 )
@@ -20,23 +19,20 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 	}
 }
 
-func CreateUserHandler(c *gin.Context) {
-	body, err := io.ReadAll(c.Request.Body)
-	fmt.Println((body))
-	if err != nil {
-		c.JSON(500, gin.H{"error": "failed to read request body"})
-	}
-	c.JSON(200, gin.H{"message": "pong"})
-}
-
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var createUserRequest requests.CreateUserRequest
-
+	log.Info().Msg("POST /api/v1/users")
 	if err := c.BindJSON(&createUserRequest); err != nil {
+		log.Error().Err(err).Msg("Invalid request body for creating user")
 		c.JSON(400, gin.H{"error": "invalid request body"})
 		return
 	}
-	fmt.Sprintf("Name: %s\nPassword: %s\nEmail: %s\n", createUserRequest.Name, createUserRequest.Password, createUserRequest.Email)
-	h.userService.CreateUser(&createUserRequest)
+	if err := h.userService.CreateUser(&createUserRequest); err != nil {
+		if err == errs.ErrConflict {
+			c.JSON(409, gin.H{"error": "user with this email already exists"})
+		} else {
+			c.JSON(500, gin.H{"error": "internal server error"})
+		}
+	}
 	c.JSON(201, gin.H{"message": "user created successfully"})
 }

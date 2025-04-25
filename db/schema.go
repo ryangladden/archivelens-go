@@ -6,7 +6,12 @@ import (
 
 func SetUp(cm *ConnectionManager) error {
 
-	err := createDocumentTable(cm)
+	err := createUpdatedAtFunction(cm)
+	if err != nil {
+		return fmt.Errorf("error creating updated_at function: %w", err)
+	}
+
+	err = createDocumentTable(cm)
 	if err != nil {
 		return fmt.Errorf("error creating documents table: %w", err)
 	}
@@ -41,6 +46,11 @@ func SetUp(cm *ConnectionManager) error {
 		return fmt.Errorf("error creating tagging table: %w", err)
 	}
 
+	err = createAuthTable(cm)
+	if err != nil {
+		return fmt.Errorf("error creating auth table: %w", err)
+	}
+
 	return nil
 }
 
@@ -50,8 +60,16 @@ func createDocumentTable(cm *ConnectionManager) error {
 		title TEXT NOT NULL,
 		date TEXT,
 		location TEXT,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (id)
 	)`)
+
+	if err != nil {
+		return fmt.Errorf("error creating documents table: %w", err)
+	}
+
+	err = createUpdatedAtTrigger(cm, "documents")
 
 	return err
 }
@@ -61,8 +79,16 @@ func createPersonsTable(cm *ConnectionManager) error {
 		id uuid NOT NULL,
 		name TEXT NOT NULL,
 		metadata JSONB,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (id)
 	)`)
+
+	if err != nil {
+		return fmt.Errorf("error creating persons table: %w", err)
+	}
+
+	err = createUpdatedAtTrigger(cm, "persons")
 
 	return err
 }
@@ -73,8 +99,16 @@ func createUsersTable(cm *ConnectionManager) error {
 		name TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
 		password BYTEA NOT NULL,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (id)
 	)`)
+
+	if err != nil {
+		return fmt.Errorf("error creating users table: %w", err)
+	}
+
+	err = createUpdatedAtTrigger(cm, "users")
 
 	return err
 }
@@ -95,10 +129,18 @@ func createOwnershipTable(cm *ConnectionManager) error {
 		user_id uuid NOT NULL,
 		document_id uuid NOT NULL,
 		role role_enum NOT NULL,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (user_id, document_id),
 		FOREIGN KEY (user_id) REFERENCES users (id),
 		FOREIGN KEY (document_id) REFERENCES documents (id)
 	)`)
+
+	if err != nil {
+		return fmt.Errorf("error creating ownership table: %w", err)
+	}
+
+	err = createUpdatedAtTrigger(cm, "ownership")
 
 	return err
 }
@@ -146,4 +188,47 @@ func createTaggingTable(cm *ConnectionManager) error {
 	)`)
 
 	return err
+}
+
+func createAuthTable(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS auth (
+		token uuid NOT NULL,
+		user_id uuid NOT NULL,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+		expires_at TIMESTAMP WITH TIME ZONE DEFAULT now() + interval '1 day' * 180,
+		PRIMARY KEY (token),
+		FOREIGN KEY (user_id) REFERENCES users (id)
+		)`)
+
+	if err != nil {
+		return fmt.Errorf("error creating documents table: %w", err)
+	}
+
+	err = createUpdatedAtTrigger(cm, "documents")
+
+	return err
+}
+
+func createUpdatedAtFunction(cm *ConnectionManager) error {
+	_, err := cm.DB.Exec(`CREATE OR REPLACE FUNCTION
+	update_updated_at_column()
+	RETURNS TRIGGER AS
+	$$ BEGIN
+	NEW.updated_at = now();
+	RETURN NEW;
+	END; $$ language 'plpgsql';`)
+
+	return err
+}
+
+func createUpdatedAtTrigger(cm *ConnectionManager, table string) error {
+	_, err := cm.DB.Exec(`CREATE  OR REPLACE TRIGGER
+	supdate_updated_at
+	BEFORE UPDATE ON ` + table + `
+	FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();`)
+
+	if err != nil {
+		return fmt.Errorf("error creating updated_at trigger: %w", err)
+	}
+	return nil
 }

@@ -18,26 +18,51 @@ var (
 
 type Server struct {
 	connectionManager *db.ConnectionManager
-	userHandler       *handlers.UserHandler
-	userService       *service.UserService
-	userDao           *db.UserDAO
-	router            *routes.Router
+
+	userHandler *handlers.UserHandler
+	authHandler *handlers.AuthHandler
+
+	userService *service.UserService
+	authService *service.AuthService
+
+	userDao *db.UserDAO
+	authDao *db.AuthDAO
+
+	router *routes.Router
 }
 
 func NewServer() *Server {
 	connectionManager := db.NewConnectionManager("localhost", 5432, "postgres", "postgres", "archive-lens-dev")
+
 	userDao := db.NewUserDAO(connectionManager)
 	userService := service.NewUserService(userDao)
 	userHandler := handlers.NewUserHandler(userService)
-	router := routes.NewRouter(userHandler)
+
+	authDao := db.NewAuthDAO(connectionManager)
+	authService := service.NewAuthService(authDao, userDao)
+	authHandler := handlers.NewAuthHandler(authService)
+
+	router := routes.NewRouter(userHandler, authHandler)
 
 	connectionManager.Connect()
+	err := db.SetUp(connectionManager)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to set up database")
+	}
 
 	return &Server{
+		connectionManager: connectionManager,
+
 		userHandler: userHandler,
+		authHandler: authHandler,
+
 		userService: userService,
-		userDao:     userDao,
-		router:      router,
+		authService: authService,
+
+		userDao: userDao,
+		authDao: authDao,
+
+		router: router,
 	}
 }
 

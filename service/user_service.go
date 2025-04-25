@@ -25,9 +25,9 @@ func NewUserService(userDao *db.UserDAO) *UserService {
 	}
 }
 
-func (s *UserService) CreateUser(user *requests.CreateUserRequest) error {
-	userModel, err := CreateUserModel(user)
-	log.Info().Msgf("Creating user with email: %s", user.Email)
+func (s *UserService) CreateUser(request *requests.CreateUserRequest) error {
+	userModel, err := createUserModel(request)
+	log.Info().Msgf("Creating user with email: %s", request.Email)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating user model")
 		return fmt.Errorf("error creating user model: %w", err)
@@ -51,7 +51,7 @@ func generateHashedPassword(password string) ([]byte, error) {
 	return hashedPassword, nil
 }
 
-func CreateUserModel(user *requests.CreateUserRequest) (*model.User, error) {
+func createUserModel(user *requests.CreateUserRequest) (*model.User, error) {
 	var userModel model.User
 	userModel.Email = user.Email
 	userModel.Name = user.Name

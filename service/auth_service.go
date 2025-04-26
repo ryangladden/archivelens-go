@@ -23,34 +23,45 @@ func NewAuthService(authDao *db.AuthDAO, userDao *db.UserDAO) *AuthService {
 	}
 }
 
-func (s *AuthService) CreateAuth(request requests.LoginRequest) (string, error) {
+func (s *AuthService) CreateAuth(request requests.LoginRequest) (string, *model.User, error) {
 	user, err := s.userDao.GetUserByField("email", request.Email)
 	if user == nil {
 		log.Error().Msgf("User not found with email: %s", request.Email)
-		return "", errs.ErrNotFound
+		return "", nil, errs.ErrNotFound
 	}
 
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	authModel, err := createAuthModel(user)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating auth model")
-		return "", err
+		return "", nil, err
 	}
-
 	err = s.verifyPassword(user, request.Password)
 	if err != nil {
 		log.Error().Err(err).Msg("Password verification failed")
-		return "", errs.ErrUnauthorized
+		return "", nil, errs.ErrUnauthorized
 	}
 
 	err = s.authDao.CreateAuth(authModel)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return authModel.AuthToken, nil
+	return authModel.AuthToken, user, nil
+}
+
+func (s *AuthService) ValidateToken(token string) (*model.User, error) {
+	user, err := s.authDao.GetUser(token)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *AuthService) DeleteAuth(token string) error {
+	return s.authDao.DeleteAuth(token)
 }
 
 func createAuthModel(user *model.User) (*model.Auth, error) {

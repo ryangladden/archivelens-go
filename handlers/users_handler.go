@@ -30,8 +30,10 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	if err := h.userService.CreateUser(&createUserRequest); err != nil {
 		if err == errs.ErrConflict {
 			c.JSON(409, gin.H{"error": "user with this email already exists"})
+			return
 		} else {
 			c.JSON(500, gin.H{"error": "internal server error"})
+			return
 		}
 	}
 	c.JSON(201, gin.H{"message": "user created successfully"})

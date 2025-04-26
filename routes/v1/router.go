@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/ryangladden/archivelens-go/handlers"
+	// "github.com/ryangladden/archivelens-go/handlers/middleware"
 )
 
 type Router struct {
@@ -36,6 +37,7 @@ func (r *Router) registerRoutes() {
 	users := v1.Group("/users")
 	{
 		users.POST("", r.userHandler.CreateUser)
+		// users.GET("me", r.authHandler.AuthenticateMiddleware(), r.userHandler.GetMe)
 		// 	users.PUT("", CreateUser)
 		// 	users.PATCH("", UpdateUser)
 		// 	users.DELETE("", DeleteUser)
@@ -43,8 +45,8 @@ func (r *Router) registerRoutes() {
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/login", r.authHandler.CreateAuth)
-		// auth.DELETE("/logout", r.userHandler.DeleteAuth)
-		// auth.GET("/me", r.userHandler.GetAuth)
+		auth.DELETE("/logout", r.authHandler.DeleteAuth)
+		auth.GET("/me", r.authHandler.AuthenticateMiddleware(), r.authHandler.GetSession)
 	}
 	// documents := v1.Group("/documents")
 	// {

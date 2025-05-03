@@ -10,4 +10,5 @@ var (
 	ErrConflict       = errors.New("conflict")
 	ErrForbidden      = errors.New("forbidden")
 	ErrDB             = errors.New("database error")
+	ErrStorage        = errors.New("s3 storage error")
 )

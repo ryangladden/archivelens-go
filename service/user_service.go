@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ryangladden/archivelens-go/db"
 	"github.com/ryangladden/archivelens-go/model"
-	"github.com/ryangladden/archivelens-go/requests"
+	requests "github.com/ryangladden/archivelens-go/request"
 )
 
 var validate = validator.New()

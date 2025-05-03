@@ -1,11 +1,11 @@
-package handlers
+package handler
 
 import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ryangladden/archivelens-go/errs"
-	"github.com/ryangladden/archivelens-go/requests"
+	errs "github.com/ryangladden/archivelens-go/err"
+	requests "github.com/ryangladden/archivelens-go/request"
 	"github.com/ryangladden/archivelens-go/service"
 )
 

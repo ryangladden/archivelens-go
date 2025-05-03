@@ -1,4 +1,4 @@
-package responses
+package response
 
 type ErrorResponse struct {
 	Code    int

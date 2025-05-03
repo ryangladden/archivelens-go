@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/ryangladden/archivelens-go/errs"
+	errs "github.com/ryangladden/archivelens-go/err"
 	"github.com/ryangladden/archivelens-go/service"
 )
 

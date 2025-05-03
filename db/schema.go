@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func SetUp(cm *ConnectionManager) error {
+func (cm *ConnectionManager) Init() error {
 
 	err := createUpdatedAtFunction(cm)
 	if err != nil {

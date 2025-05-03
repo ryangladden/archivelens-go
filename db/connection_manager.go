@@ -7,41 +7,20 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// var DB *sql.DB
-
 type ConnectionManager struct {
-	host     string
-	port     int
-	user     string
-	password string
-	dbname   string
-	DB       *sql.DB
+	DB *sql.DB
 }
-
-// const (
-// 	host     = "localhost"
-// 	port     = 5432
-// 	user     = "postgres"
-// 	password = "postgres"
-// 	dbname   = "archive-lens-dev"
-// )
 
 func NewConnectionManager(host string, port int, user string, password string, dbname string) *ConnectionManager {
-	return &ConnectionManager{
-		host:     host,
-		port:     port,
-		user:     user,
-		password: password,
-		dbname:   dbname,
-	}
-}
-
-func (c *ConnectionManager) Connect() error {
-	var err error
-	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", c.host, c.port, c.user, c.password, c.dbname)
-	c.DB, err = sql.Open("postgres", connStr)
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	DB, err := sql.Open("postgres", connStr)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	return c.DB.Ping()
+	if err = DB.Ping(); err != nil {
+		panic(err)
+	}
+	return &ConnectionManager{
+		DB: DB,
+	}
 }

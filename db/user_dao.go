@@ -6,7 +6,7 @@ import (
 
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
-	"github.com/ryangladden/archivelens-go/errs"
+	errs "github.com/ryangladden/archivelens-go/err"
 	"github.com/ryangladden/archivelens-go/model"
 )
 

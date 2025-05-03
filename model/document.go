@@ -1,8 +1,13 @@
 package model
 
+import (
+	"time"
+)
+
 type Document struct {
-	ID       int    `json:"id"`
-	Title    string `json:"title"`
-	Date     string `json:"date"`
-	Location string `json:"location"`
+	ID       string    `json:"id validate:"uuid"`
+	Title    string    `json:"title"`
+	Date     time.Time `json:"date"`
+	Location string    `json:"location"`
+	S3Key    string    `json:"s3key"`
 }

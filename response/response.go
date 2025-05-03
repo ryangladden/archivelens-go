@@ -1,4 +1,4 @@
-package responses
+package response
 
 type LoginResponse struct {
 	Name  string `json:"name"`

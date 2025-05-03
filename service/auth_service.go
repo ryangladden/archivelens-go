@@ -6,9 +6,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/ryangladden/archivelens-go/db"
-	"github.com/ryangladden/archivelens-go/errs"
+	errs "github.com/ryangladden/archivelens-go/err"
 	"github.com/ryangladden/archivelens-go/model"
-	"github.com/ryangladden/archivelens-go/requests"
+	"github.com/ryangladden/archivelens-go/request"
 )
 
 type AuthService struct {
@@ -23,7 +23,7 @@ func NewAuthService(authDao *db.AuthDAO, userDao *db.UserDAO) *AuthService {
 	}
 }
 
-func (s *AuthService) CreateAuth(request requests.LoginRequest) (string, *model.User, error) {
+func (s *AuthService) CreateAuth(request request.LoginRequest) (string, *model.User, error) {
 	user, err := s.userDao.GetUserByField("email", request.Email)
 	if user == nil {
 		log.Error().Msgf("User not found with email: %s", request.Email)

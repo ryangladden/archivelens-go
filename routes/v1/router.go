@@ -2,23 +2,25 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/ryangladden/archivelens-go/handlers"
+	"github.com/ryangladden/archivelens-go/handler"
 	// "github.com/ryangladden/archivelens-go/handlers/middleware"
 )
 
 type Router struct {
-	userHandler *handlers.UserHandler
-	authHandler *handlers.AuthHandler
-	routes      *gin.Engine
+	userHandler     *handler.UserHandler
+	authHandler     *handler.AuthHandler
+	documentHandler *handler.DocumentHandler
+	routes          *gin.Engine
 }
 
-func NewRouter(userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler) *Router {
+func NewRouter(userHandler *handler.UserHandler, authHandler *handler.AuthHandler, documentHandler *handler.DocumentHandler) *Router {
 	r := gin.Default()
 
 	router := &Router{
-		userHandler: userHandler,
-		authHandler: authHandler,
-		routes:      r,
+		userHandler:     userHandler,
+		authHandler:     authHandler,
+		documentHandler: documentHandler,
+		routes:          r,
 	}
 
 	router.registerRoutes()
@@ -48,14 +50,15 @@ func (r *Router) registerRoutes() {
 		auth.DELETE("/logout", r.authHandler.DeleteAuth)
 		auth.GET("/me", r.authHandler.AuthenticateMiddleware(), r.authHandler.GetSession)
 	}
-	// documents := v1.Group("/documents")
-	// {
-	// 	documents.GET("", GetDocuments)
-	// 	documents.POST("", CreateDocument)
-	// 	documents.GET("/:id", GetDocument)
-	// 	documents.PATCH("/:id", UpdateDocument)
-	// 	documents.DELETE("/:id", DeleteDocument)
-	// }
+	documents := v1.Group("/documents")
+	documents.Use(r.authHandler.AuthenticateMiddleware())
+	{
+		// documents.GET("/:id", r.documentHandler.GetDocument)
+		documents.POST("/upload", r.documentHandler.CreateDocument)
+		// 	documents.GET("/:id", GetDocument)
+		// 	documents.PATCH("/:id", UpdateDocument)
+		// 	documents.DELETE("/:id", DeleteDocument)
+	}
 	// persons := v1.Group("/persons")
 	// {
 	// 	persons.GET("", GetPersons)

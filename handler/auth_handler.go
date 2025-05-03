@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"net/http"
@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/ryangladden/archivelens-go/errs"
+	errs "github.com/ryangladden/archivelens-go/err"
 	"github.com/ryangladden/archivelens-go/model"
-	"github.com/ryangladden/archivelens-go/requests"
-	"github.com/ryangladden/archivelens-go/responses"
+	"github.com/ryangladden/archivelens-go/request"
+	"github.com/ryangladden/archivelens-go/response"
 	"github.com/ryangladden/archivelens-go/service"
 )
 
@@ -25,7 +25,7 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 }
 
 func (h *AuthHandler) CreateAuth(c *gin.Context) {
-	var loginRequest requests.LoginRequest
+	var loginRequest request.LoginRequest
 	if err := c.BindJSON(&loginRequest); err != nil {
 		log.Error().Err(err).Msg("Invalid request body for logging in")
 		c.JSON(400, gin.H{"error": "invalid request body"})
@@ -45,7 +45,7 @@ func (h *AuthHandler) CreateAuth(c *gin.Context) {
 	}
 
 	http.SetCookie(c.Writer, createCookie(authToken))
-	var response = &responses.LoginResponse{Email: user.Email, Name: user.Name}
+	var response = &response.LoginResponse{Email: user.Email, Name: user.Name}
 
 	c.JSON(200, response)
 }
@@ -64,7 +64,7 @@ func (h *AuthHandler) DeleteAuth(c *gin.Context) {
 func (h *AuthHandler) GetSession(c *gin.Context) {
 	user := getUserFromContext(c)
 	if user != nil {
-		var response = &responses.LoginResponse{
+		var response = &response.LoginResponse{
 			Email: user.Email,
 			Name:  user.Name,
 		}

@@ -14,8 +14,7 @@ var (
 
 func TestMain(m *testing.M) {
 	cm = NewConnectionManager("localhost", 5432, "postgres", "postgres", "archive-lens-dev")
-	cm.Connect()
-	SetUp(cm)
+	cm.Init()
 	userDAO = NewUserDAO(cm)
 	m.Run()
 }
@@ -37,7 +36,9 @@ func TestCreateUser(t *testing.T) {
 	}
 	// Verify the user was created
 	var createdUser model.User
-	err = userDAO.cm.DB.QueryRow("SELECT id, name, email, password FROM users WHERE id = $1", user.ID).Scan(&createdUser.ID, &createdUser.Name, &createdUser.Email, &createdUser.Password)
+	err = userDAO.cm.DB.QueryRow(
+		"SELECT id, name, email, password FROM users WHERE id = $1", user.ID).Scan(
+		&createdUser.ID, &createdUser.Name, &createdUser.Email, &createdUser.Password)
 	if err != nil {
 		t.Fatalf("Failed to retrieve created user: %v", err)
 	}

@@ -3,6 +3,8 @@ package request
 import (
 	"mime/multipart"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type LoginRequest struct {
@@ -17,12 +19,13 @@ type CreateUserRequest struct {
 }
 
 type CreateDocumentRequest struct {
-	Title      string                `form:"title" binding:"required"`
-	Author     string                `form:"author"`
-	Coauthors  []string              `form:"coauthors"`
-	Mentions   []string              `form:"mentions"`
-	Recipients []string              `form:"recipients"`
-	Date       time.Time             `form:"date"`
-	Location   string                `form:"location" `
-	File       *multipart.FileHeader `form:"file"`
+	Title     string                `form:"title" binding:"required"`
+	Author    string                `form:"author"`
+	Coauthors []string              `form:"coauthors"`
+	Mentions  []string              `form:"mentions"`
+	Recipient string                `form:"recipient"`
+	Date      time.Time             `form:"date"`
+	Location  string                `form:"location" `
+	File      *multipart.FileHeader `form:"file" binding:"required"`
+	Owner     uuid.UUID
 }

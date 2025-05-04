@@ -33,14 +33,17 @@ type Server struct {
 	connectionManager *db.ConnectionManager
 	storageManager    *storage.StorageManager
 
-	userHandler *handler.UserHandler
-	authHandler *handler.AuthHandler
+	userHandler     *handler.UserHandler
+	authHandler     *handler.AuthHandler
+	documentHandler *handler.DocumentHandler
 
-	userService *service.UserService
-	authService *service.AuthService
+	userService     *service.UserService
+	authService     *service.AuthService
+	documentService *service.DocumentService
 
-	userDao *db.UserDAO
-	authDao *db.AuthDAO
+	userDao     *db.UserDAO
+	authDao     *db.AuthDAO
+	documentDao *db.DocumentDAO
 
 	router *routes.Router
 }
@@ -60,7 +63,7 @@ func NewServer() *Server {
 	authHandler := handler.NewAuthHandler(authService)
 
 	documentDao := db.NewDocumentDAO(connectionManager)
-	documentService := service.NewDocumentService(documentDao)
+	documentService := service.NewDocumentService(documentDao, storageManager)
 	documentHandler := handler.NewDocumentHandler(documentService)
 
 	router := routes.NewRouter(userHandler, authHandler, documentHandler)
@@ -69,22 +72,23 @@ func NewServer() *Server {
 		connectionManager: connectionManager,
 		storageManager:    storageManager,
 
-		userHandler: userHandler,
-		authHandler: authHandler,
+		userHandler:     userHandler,
+		authHandler:     authHandler,
+		documentHandler: documentHandler,
 
-		userService: userService,
-		authService: authService,
+		userService:     userService,
+		authService:     authService,
+		documentService: documentService,
 
-		userDao: userDao,
-		authDao: authDao,
+		userDao:     userDao,
+		authDao:     authDao,
+		documentDao: documentDao,
 
 		router: router,
 	}
 }
 
-func (s *Server) Init(hostname string) {
-	s.connectionManager.Init()
-	s.storageManager.S3Init(s3BucketName, s3Location)
+func (s *Server) Run(hostname string) {
 	s.router.Run(hostname)
 }
 

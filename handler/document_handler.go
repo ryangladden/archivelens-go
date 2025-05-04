@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	"github.com/gin-gonic/gin"
@@ -30,12 +31,12 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Msg("Error parsing form")
 	}
-	fmt.Print(request)
-	request.File, err = c.FormFile("file")
-	c.SaveUploadedFile(request.File, "./newfile.pdf")
-	if err != nil {
-		log.Error().Err(err).Msg("Error parsing form")
+
+	userId, exists := c.Get("user")
+	if !exists {
+		return
 	}
+	request.Owner = userId.(uuid.UUID)
 	uuid, err := h.documentService.CreateDocument(request)
 	fmt.Print(uuid)
 	c.JSON(200, gin.H{"form": request})

@@ -14,60 +14,65 @@ import (
 
 type StorageManager struct {
 	minioClient *minio.Client
+	bucketName  string
 }
 
 func NewStorageManager(s3Endpoint string, s3AccessKeyId string, s3SecretAccessKey string, s3BucketName string, s3Location string) *StorageManager {
-	minioClient, err := createClient(s3Endpoint, s3AccessKeyId, s3SecretAccessKey)
-	if err != nil {
-		panic(err)
-	}
+	minioClient := createClient(s3Endpoint, s3AccessKeyId, s3SecretAccessKey)
+	s3Init(minioClient, s3BucketName, s3Location)
+
 	return &StorageManager{
 		minioClient: minioClient,
+		bucketName:  s3BucketName,
 	}
 }
 
-func (sm *StorageManager) S3Init(s3bucketName string, s3location string) error {
+func s3Init(minioClient *minio.Client, s3bucketName string, s3location string) {
 	ctx := context.Background()
-	err := sm.minioClient.MakeBucket(ctx, s3bucketName, minio.MakeBucketOptions{
+	err := minioClient.MakeBucket(ctx, s3bucketName, minio.MakeBucketOptions{
 		Region: s3location,
 	})
 
 	if err != nil {
-		exists, errBucketExists := sm.minioClient.BucketExists(ctx, s3bucketName)
+		exists, errBucketExists := minioClient.BucketExists(ctx, s3bucketName)
 		if errBucketExists == nil && exists {
 			log.Info().Msgf("Bucket \"%s\" exists, skipping bucket creation", s3bucketName)
 		} else {
-			log.Error().Err(err).Msgf("Failed to initialize bucket \"%s\"", s3bucketName)
-			panic(err)
+			log.Fatal().Err(err).Msgf("Failed to initialize bucket \"%s\"", s3bucketName)
 		}
 	}
-	return nil
 }
 
-func (sm *StorageManager) UploadFile(file *multipart.FileHeader, bucketName string, key string) error {
-	ctx := context.Background()
-	reader, err := file.Open()
+func (sm *StorageManager) UploadFile(file *multipart.FileHeader, key string) error {
+
 	if sm.minioClient == nil {
-		panic(err)
+		log.Error().Msg("Minio client is offline")
+		return errs.ErrStorage
 	}
+
+	reader, err := file.Open()
 	if err != nil {
-		log.Error().Err(err).Msgf("Error uploading file: %s", file.Filename)
+		log.Error().Err(err).Msgf("Error opening file: %s", file.Filename)
 		return errs.ErrStorage
 	}
 	defer reader.Close()
-	sm.minioClient.PutObject(ctx, bucketName, key, reader, file.Size, minio.PutObjectOptions{})
+
+	ctx := context.Background()
+	_, err = sm.minioClient.PutObject(ctx, sm.bucketName, key, reader, file.Size, minio.PutObjectOptions{})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to put in the bucket")
+	}
 	return nil
 }
 
-func createClient(s3Endpoint string, s3AccessKeyId string, s3SecretAccessKey string) (*minio.Client, error) {
+func createClient(s3Endpoint string, s3AccessKeyId string, s3SecretAccessKey string) *minio.Client {
 	minioClient, err := minio.New(s3Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(s3AccessKeyId, s3SecretAccessKey, ""),
 		Secure: false,
 	})
 	if err != nil {
-		log.Error().Err(err).Msgf("Error connection to S3 instance at endpoint %s", s3Endpoint)
-		return nil, errs.ErrStorage
+		log.Fatal().Err(err).Msgf("Unable to create S3 client at endpoint %s", s3Endpoint)
 	}
 	log.Info().Msgf("New S3 client accessing %s", s3Endpoint)
-	return minioClient, nil
+	return minioClient
 }

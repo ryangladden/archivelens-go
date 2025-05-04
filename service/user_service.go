@@ -67,7 +67,7 @@ func createUserModel(user *requests.CreateUserRequest) (*model.User, error) {
 		return nil, fmt.Errorf("error generating UUID: %w", err)
 	}
 
-	userModel.ID = id.String()
+	userModel.ID = id
 	if err := validate.Struct(userModel); err != nil {
 		log.Error().Err(err).Msgf("Error validating user model for email %s:", user.Email)
 		return nil, fmt.Errorf("error validating user model: %w", err)

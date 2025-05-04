@@ -1,81 +1,45 @@
 package db
 
 import (
-	"fmt"
+	"database/sql"
+
+	"github.com/rs/zerolog/log"
 )
 
-func (cm *ConnectionManager) Init() error {
+func Init(db *sql.DB) {
 
-	err := createUpdatedAtFunction(cm)
-	if err != nil {
-		return fmt.Errorf("error creating updated_at function: %w", err)
-	}
-
-	err = createDocumentTable(cm)
-	if err != nil {
-		return fmt.Errorf("error creating documents table: %w", err)
-	}
-
-	err = createPersonsTable(cm)
-	if err != nil {
-		return fmt.Errorf("error creating persons table: %w", err)
-	}
-
-	err = createUsersTable(cm)
-	if err != nil {
-		return fmt.Errorf("error creating users table: %w", err)
-	}
-
-	err = createOwnershipTable(cm)
-	if err != nil {
-		return fmt.Errorf("error creating ownership table: %w", err)
-	}
-
-	err = createAuthorshipTable(cm)
-	if err != nil {
-		return fmt.Errorf("error creating authorship table: %w", err)
-	}
-
-	err = createTagsTable(cm)
-	if err != nil {
-		return fmt.Errorf("error creating tags table: %w", err)
-	}
-
-	err = createTaggingTable(cm)
-	if err != nil {
-		return fmt.Errorf("error creating tagging table: %w", err)
-	}
-
-	err = createAuthTable(cm)
-	if err != nil {
-		return fmt.Errorf("error creating auth table: %w", err)
-	}
-
-	return nil
+	createUpdatedAtFunction(db)
+	createDocumentTable(db)
+	createPersonsTable(db)
+	createUsersTable(db)
+	createOwnershipTable(db)
+	createAuthorshipTable(db)
+	createTagsTable(db)
+	createTaggingTable(db)
+	createAuthTable(db)
 }
 
-func createDocumentTable(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS documents (
+func createDocumentTable(db *sql.DB) {
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS documents (
 		id uuid NOT NULL,
 		title TEXT NOT NULL,
 		date TEXT,
 		location TEXT,
+		s3_key TEXT NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (id)
 	)`)
 
 	if err != nil {
-		return fmt.Errorf("error creating documents table: %w", err)
+		log.Fatal().Err(err).Msg("DB initialization failed to create documents table")
 	}
 
-	err = createUpdatedAtTrigger(cm, "documents")
-
-	return err
+	createUpdatedAtTrigger(db, "documents")
 }
 
-func createPersonsTable(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS persons (
+func createPersonsTable(db *sql.DB) {
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS persons (
 		id uuid NOT NULL,
 		name TEXT NOT NULL,
 		metadata JSONB,
@@ -85,16 +49,14 @@ func createPersonsTable(cm *ConnectionManager) error {
 	)`)
 
 	if err != nil {
-		return fmt.Errorf("error creating persons table: %w", err)
+		log.Fatal().Err(err).Msg("DB initialization failed to create persons table")
 	}
 
-	err = createUpdatedAtTrigger(cm, "persons")
-
-	return err
+	createUpdatedAtTrigger(db, "persons")
 }
 
-func createUsersTable(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS users (
+func createUsersTable(db *sql.DB) {
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS users (
 		id uuid NOT NULL,
 		name TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
@@ -105,93 +67,95 @@ func createUsersTable(cm *ConnectionManager) error {
 	)`)
 
 	if err != nil {
-		return fmt.Errorf("error creating users table: %w", err)
+		log.Fatal().Err(err).Msg("DB initialization failed to create users table")
 	}
 
-	err = createUpdatedAtTrigger(cm, "users")
-
-	return err
+	createUpdatedAtTrigger(db, "users")
 }
 
-func createOwnershipTable(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`DO $$ BEGIN
-			CREATE TYPE role_enum  AS ENUM 
+func createOwnershipTable(db *sql.DB) {
+	_, err := db.Exec(`DO $$ BEGIN
+			CREATE TYPE role_enum AS ENUM 
 			('owner', 'editor', 'viewer');
 		EXCEPTION
 			WHEN duplicate_object THEN null;
 		END $$;`)
 
 	if err != nil {
-		return fmt.Errorf("error creating role_enum: %w", err)
+		log.Fatal().Err(err).Msgf("DB initialization failed to create ownership role_enum enum")
 	}
 
-	_, err = cm.DB.Exec(`CREATE TABLE IF NOT EXISTS ownership (
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS ownership (
 		user_id uuid NOT NULL,
 		document_id uuid NOT NULL,
 		role role_enum NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (user_id, document_id),
-		FOREIGN KEY (user_id) REFERENCES users (id),
-		FOREIGN KEY (document_id) REFERENCES documents (id)
+		FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+		FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE
 	)`)
 
 	if err != nil {
-		return fmt.Errorf("error creating ownership table: %w", err)
+		log.Fatal().Err(err).Msgf("DB initialization failed to create ownership table")
 	}
 
-	err = createUpdatedAtTrigger(cm, "ownership")
-
-	return err
+	createUpdatedAtTrigger(db, "ownership")
 }
 
-func createAuthorshipTable(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`DO $$ BEGIN
+func createAuthorshipTable(db *sql.DB) {
+	_, err := db.Exec(`DO $$ BEGIN
 		CREATE TYPE
 			authorship_enum AS ENUM
-			('author', 'subject', 'recipient');
+			('author', 'coauthor, 'subject', 'recipient');
 		EXCEPTION
 			WHEN duplicate_object THEN null;
 		END $$;`)
 	if err != nil {
-		return fmt.Errorf("error creating authorship_enum: %w", err)
+		log.Fatal().Err(err).Msgf("DB initialization failed to create authorship_enum enum")
 	}
 
-	_, err = cm.DB.Exec(`CREATE TABLE IF NOT EXISTS authorship (
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS authorship (
 		person_id uuid NOT NULL,
 		document_id uuid NOT NULL,
 		role authorship_enum NOT NULL,
 		PRIMARY KEY (person_id, document_id),
-		FOREIGN KEY (person_id) REFERENCES persons (id),
-		FOREIGN KEY (document_id) REFERENCES documents (id)
+		FOREIGN KEY (person_id) REFERENCES persons (id) ON DELETE CASCADE,
+		FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE
 	)`)
-	return err
+	if err != nil {
+		log.Fatal().Err(err).Msgf("DB initialization failed to create authorship table")
+	}
 }
 
-func createTagsTable(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS tags (
+func createTagsTable(db *sql.DB) {
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS tags (
 		id SERIAL NOT NULL,
 		tag TEXT NOT NULL UNIQUE,
 		PRIMARY KEY (id)
 	)`)
 
-	return err
+	if err != nil {
+		log.Fatal().Err(err).Msgf("DB initialization failed to create tags table")
+	}
 }
 
-func createTaggingTable(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS document_tags (
+func createTaggingTable(db *sql.DB) {
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS document_tags (
 		document_id uuid NOT NULL,
 		tag_id SERIAL NOT NULL,
 		PRIMARY KEY (document_id, tag_id),
-		FOREIGN KEY (document_id) REFERENCES documents (id),
-		FOREIGN KEY (tag_id) REFERENCES tags (id)
+		FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE,
+		FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
 	)`)
 
-	return err
+	if err != nil {
+		log.Fatal().Err(err).Msgf("DB initialization failed to create tagging table")
+	}
 }
 
-func createAuthTable(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`CREATE TABLE IF NOT EXISTS auth (
+func createAuthTable(db *sql.DB) {
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS auth (
 		token uuid NOT NULL,
 		user_id uuid NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -201,16 +165,14 @@ func createAuthTable(cm *ConnectionManager) error {
 		)`)
 
 	if err != nil {
-		return fmt.Errorf("error creating documents table: %w", err)
+		log.Fatal().Err(err).Msgf("DB initialization failed to create auth table")
 	}
 
-	err = createUpdatedAtTrigger(cm, "documents")
-
-	return err
+	createUpdatedAtTrigger(db, "documents")
 }
 
-func createUpdatedAtFunction(cm *ConnectionManager) error {
-	_, err := cm.DB.Exec(`CREATE OR REPLACE FUNCTION
+func createUpdatedAtFunction(db *sql.DB) {
+	_, err := db.Exec(`CREATE OR REPLACE FUNCTION
 	update_updated_at_column()
 	RETURNS TRIGGER AS
 	$$ BEGIN
@@ -218,17 +180,18 @@ func createUpdatedAtFunction(cm *ConnectionManager) error {
 	RETURN NEW;
 	END; $$ language 'plpgsql';`)
 
-	return err
+	if err != nil {
+		log.Fatal().Err(err).Msgf("DB initialization failed to create updated_at function")
+	}
 }
 
-func createUpdatedAtTrigger(cm *ConnectionManager, table string) error {
-	_, err := cm.DB.Exec(`CREATE  OR REPLACE TRIGGER
-	supdate_updated_at
+func createUpdatedAtTrigger(db *sql.DB, table string) {
+	_, err := db.Exec(`CREATE OR REPLACE TRIGGER
+	update_updated_at
 	BEFORE UPDATE ON ` + table + `
 	FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();`)
 
 	if err != nil {
-		return fmt.Errorf("error creating updated_at trigger: %w", err)
+		log.Fatal().Err(err).Msgf("DB initialization failed to create updated_at trigger for %s table", table)
 	}
-	return nil
 }

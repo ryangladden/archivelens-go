@@ -22,7 +22,7 @@ func AuthenticateMiddleware(authService *service.AuthService) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user", user)
+		c.Set("user", user.ID)
 		c.Next()
 	}
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	errs "github.com/ryangladden/archivelens-go/err"
-	requests "github.com/ryangladden/archivelens-go/request"
+	"github.com/ryangladden/archivelens-go/request"
 	"github.com/ryangladden/archivelens-go/service"
 )
 
@@ -20,7 +20,7 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
-	var createUserRequest requests.CreateUserRequest
+	var createUserRequest request.CreateUserRequest
 	log.Info().Msg("POST /api/v1/users")
 	if err := c.BindJSON(&createUserRequest); err != nil {
 		log.Error().Err(err).Msg("Invalid request body for creating user")

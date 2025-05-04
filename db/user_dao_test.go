@@ -14,7 +14,6 @@ var (
 
 func TestMain(m *testing.M) {
 	cm = NewConnectionManager("localhost", 5432, "postgres", "postgres", "archive-lens-dev")
-	cm.Init()
 	userDAO = NewUserDAO(cm)
 	m.Run()
 }
@@ -25,7 +24,7 @@ func TestCreateUser(t *testing.T) {
 
 	// Create a new user
 	user := &model.User{
-		ID:       id.String(),
+		ID:       id,
 		Name:     "Test User",
 		Email:    "email@email.com",
 		Password: []byte("hashed-password"),
@@ -65,14 +64,14 @@ func TestCreateExistingEmail(t *testing.T) {
 
 	// Create a new user
 	user := &model.User{
-		ID:       id.String(),
+		ID:       id,
 		Name:     "Test User",
 		Email:    "email@email.com",
 		Password: []byte("hashed-password"),
 	}
 
 	existingUser := &model.User{
-		ID:       idNew.String(),
+		ID:       idNew,
 		Name:     "Existing User",
 		Email:    "email@email.com",
 		Password: []byte("hashed-password"),

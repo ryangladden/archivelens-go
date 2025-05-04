@@ -22,5 +22,5 @@ func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).With().Timestamp().Logger()
 
 	server := server.NewServer()
-	server.Init(":8080")
+	server.Run(":8080")
 }

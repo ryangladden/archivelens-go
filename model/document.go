@@ -2,10 +2,12 @@ package model
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Document struct {
-	ID       string    `json:"id validate:"uuid"`
+	ID       uuid.UUID `json:"id validate:"uuid"`
 	Title    string    `json:"title"`
 	Date     time.Time `json:"date"`
 	Location string    `json:"location"`

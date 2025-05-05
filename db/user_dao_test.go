@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -35,7 +36,7 @@ func TestCreateUser(t *testing.T) {
 	}
 	// Verify the user was created
 	var createdUser model.User
-	err = userDAO.cm.DB.QueryRow(
+	err = userDAO.cm.DB.QueryRow(context.Background(),
 		"SELECT id, name, email, password FROM users WHERE id = $1", user.ID).Scan(
 		&createdUser.ID, &createdUser.Name, &createdUser.Email, &createdUser.Password)
 	if err != nil {
@@ -45,7 +46,7 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("Created user does not match expected user: got %+v, want %+v", createdUser, user)
 	}
 	// Clean up the created user
-	_, err = userDAO.cm.DB.Exec("DELETE FROM users WHERE id = $1", user.ID)
+	_, err = userDAO.cm.DB.Exec(context.Background(), "DELETE FROM users WHERE id = $1", user.ID)
 	if err != nil {
 		t.Fatalf("Failed to clean up created user: %v", err)
 	}
@@ -90,7 +91,7 @@ func TestCreateExistingEmail(t *testing.T) {
 		t.Errorf("Expected error message 'pq: duplicate key value violates unique constraint \"users_email_key\"', got '%v'", err)
 	}
 	// Clean up the created user
-	_, err = userDAO.cm.DB.Exec("DELETE FROM users WHERE id = $1", user.ID)
+	_, err = userDAO.cm.DB.Exec(context.Background(), "DELETE FROM users WHERE id = $1", user.ID)
 	if err != nil {
 		t.Fatalf("Failed to clean up created user: %v", err)
 	}

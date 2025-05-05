@@ -1,27 +1,27 @@
 package db
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 
 	"github.com/rs/zerolog/log"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
 )
 
 type ConnectionManager struct {
-	DB *sql.DB
+	DB *pgx.Conn
 }
 
 func NewConnectionManager(host string, port int, user string, password string, dbname string) *ConnectionManager {
-	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	DB, err := sql.Open("postgres", connStr)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, password, host, port, dbname)
+	DB, err := pgx.Connect(context.Background(), connStr)
 	if err != nil {
 		log.Error().Err(err).Msgf("Unable to connect to database %s at host %s:%d", dbname, host, port)
 		panic(err)
 	}
 
-	if err = DB.Ping(); err != nil {
+	if err = DB.Ping(context.Background()); err != nil {
 		log.Error().Err(err).Msg("Database unreachable")
 		panic(err)
 	}

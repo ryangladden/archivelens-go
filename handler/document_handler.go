@@ -32,11 +32,15 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 		log.Error().Err(err).Msg("Error parsing form")
 	}
 
-	userId, exists := c.Get("user")
-	if !exists {
+	val := c.MustGet("user")
+	userID, ok := val.(uuid.UUID)
+	if !ok {
+		log.Error().Msg("Unable to obtain user_id from context")
+		c.AbortWithStatus(500)
 		return
 	}
-	request.Owner = userId.(uuid.UUID)
+	log.Debug().Interface("user", userID)
+	request.Owner = userID
 	uuid, err := h.documentService.CreateDocument(request)
 	fmt.Print(uuid)
 	c.JSON(200, gin.H{"form": request})

@@ -1,12 +1,13 @@
 package db
 
 import (
-	"database/sql"
+	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 )
 
-func Init(db *sql.DB) {
+func Init(db *pgx.Conn) {
 
 	createUpdatedAtFunction(db)
 	createDocumentTable(db)
@@ -19,8 +20,8 @@ func Init(db *sql.DB) {
 	createAuthTable(db)
 }
 
-func createDocumentTable(db *sql.DB) {
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS documents (
+func createDocumentTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS documents (
 		id uuid NOT NULL,
 		title TEXT NOT NULL,
 		date TEXT,
@@ -38,8 +39,8 @@ func createDocumentTable(db *sql.DB) {
 	createUpdatedAtTrigger(db, "documents")
 }
 
-func createPersonsTable(db *sql.DB) {
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS persons (
+func createPersonsTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS persons (
 		id uuid NOT NULL,
 		name TEXT NOT NULL,
 		metadata JSONB,
@@ -55,8 +56,8 @@ func createPersonsTable(db *sql.DB) {
 	createUpdatedAtTrigger(db, "persons")
 }
 
-func createUsersTable(db *sql.DB) {
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS users (
+func createUsersTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS users (
 		id uuid NOT NULL,
 		name TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
@@ -73,9 +74,9 @@ func createUsersTable(db *sql.DB) {
 	createUpdatedAtTrigger(db, "users")
 }
 
-func createOwnershipTable(db *sql.DB) {
-	_, err := db.Exec(`DO $$ BEGIN
-			CREATE TYPE role_enum AS ENUM 
+func createOwnershipTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `DO $$ BEGIN
+		CREATE TYPE role_enum AS ENUM 
 			('owner', 'editor', 'viewer');
 		EXCEPTION
 			WHEN duplicate_object THEN null;
@@ -85,7 +86,7 @@ func createOwnershipTable(db *sql.DB) {
 		log.Fatal().Err(err).Msgf("DB initialization failed to create ownership role_enum enum")
 	}
 
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS ownership (
+	_, err = db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS ownership (
 		user_id uuid NOT NULL,
 		document_id uuid NOT NULL,
 		role role_enum NOT NULL,
@@ -103,11 +104,10 @@ func createOwnershipTable(db *sql.DB) {
 	createUpdatedAtTrigger(db, "ownership")
 }
 
-func createAuthorshipTable(db *sql.DB) {
-	_, err := db.Exec(`DO $$ BEGIN
-		CREATE TYPE
-			authorship_enum AS ENUM
-			('author', 'coauthor, 'subject', 'recipient');
+func createAuthorshipTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `DO $$ BEGIN
+		CREATE TYPE authorship_enum AS ENUM
+			('author', 'coauthor', 'subject', 'recipient');
 		EXCEPTION
 			WHEN duplicate_object THEN null;
 		END $$;`)
@@ -115,7 +115,7 @@ func createAuthorshipTable(db *sql.DB) {
 		log.Fatal().Err(err).Msgf("DB initialization failed to create authorship_enum enum")
 	}
 
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS authorship (
+	_, err = db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS authorship (
 		person_id uuid NOT NULL,
 		document_id uuid NOT NULL,
 		role authorship_enum NOT NULL,
@@ -128,8 +128,8 @@ func createAuthorshipTable(db *sql.DB) {
 	}
 }
 
-func createTagsTable(db *sql.DB) {
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS tags (
+func createTagsTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS tags (
 		id SERIAL NOT NULL,
 		tag TEXT NOT NULL UNIQUE,
 		PRIMARY KEY (id)
@@ -140,8 +140,8 @@ func createTagsTable(db *sql.DB) {
 	}
 }
 
-func createTaggingTable(db *sql.DB) {
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS document_tags (
+func createTaggingTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS document_tags (
 		document_id uuid NOT NULL,
 		tag_id SERIAL NOT NULL,
 		PRIMARY KEY (document_id, tag_id),
@@ -154,8 +154,8 @@ func createTaggingTable(db *sql.DB) {
 	}
 }
 
-func createAuthTable(db *sql.DB) {
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS auth (
+func createAuthTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS auth (
 		token uuid NOT NULL,
 		user_id uuid NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -171,8 +171,8 @@ func createAuthTable(db *sql.DB) {
 	createUpdatedAtTrigger(db, "documents")
 }
 
-func createUpdatedAtFunction(db *sql.DB) {
-	_, err := db.Exec(`CREATE OR REPLACE FUNCTION
+func createUpdatedAtFunction(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(), `CREATE OR REPLACE FUNCTION
 	update_updated_at_column()
 	RETURNS TRIGGER AS
 	$$ BEGIN
@@ -185,10 +185,10 @@ func createUpdatedAtFunction(db *sql.DB) {
 	}
 }
 
-func createUpdatedAtTrigger(db *sql.DB, table string) {
-	_, err := db.Exec(`CREATE OR REPLACE TRIGGER
+func createUpdatedAtTrigger(db *pgx.Conn, table string) {
+	_, err := db.Exec(context.Background(), `CREATE OR REPLACE TRIGGER
 	update_updated_at
-	BEFORE UPDATE ON ` + table + `
+	BEFORE UPDATE ON `+table+`
 	FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();`)
 
 	if err != nil {

@@ -29,7 +29,8 @@ func NewDocumentService(documentDao *db.DocumentDAO, storageManager *storage.Sto
 func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) (string, error) {
 	document := generateDocumentModel(request)
 	s.uploadToS3(request.File, document.S3Key)
-	s.documentDao.CreateDocument(request.Owner, document)
+	authorships := generateAuthorshipArray(document.ID.String(), request)
+	s.documentDao.CreateDocument(request.Owner, document, authorships)
 	return "", nil
 }
 

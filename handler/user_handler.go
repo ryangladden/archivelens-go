@@ -27,7 +27,8 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "invalid request body"})
 		return
 	}
-	if err := h.userService.CreateUser(&createUserRequest); err != nil {
+	user, err := h.userService.CreateUser(&createUserRequest)
+	if err != nil {
 		if err == errs.ErrConflict {
 			c.JSON(409, gin.H{"error": "user with this email already exists"})
 			return
@@ -36,5 +37,5 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(201, gin.H{"message": "user created successfully"})
+	c.JSON(201, user)
 }

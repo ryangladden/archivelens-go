@@ -45,9 +45,8 @@ func (h *AuthHandler) CreateAuth(c *gin.Context) {
 	}
 
 	http.SetCookie(c.Writer, createCookie(authToken))
-	var response = &response.LoginResponse{Email: user.Email, Name: user.Name}
 
-	c.JSON(200, response)
+	c.JSON(200, user)
 }
 
 func (h *AuthHandler) DeleteAuth(c *gin.Context) {
@@ -79,6 +78,7 @@ func (h *AuthHandler) AuthenticateMiddleware() gin.HandlerFunc {
 		token, err := c.Cookie("archive_lens_access_token")
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Unauthorized"})
+			return
 		}
 
 		user, err := h.authService.ValidateToken(token)
@@ -90,7 +90,7 @@ func (h *AuthHandler) AuthenticateMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("user", user)
+		c.Set("user", user.ID)
 		c.Next()
 	}
 }

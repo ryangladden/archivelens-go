@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/rs/zerolog/log"
@@ -19,7 +20,7 @@ func NewAuthDAO(cm *ConnectionManager) *AuthDAO {
 }
 
 func (dao *AuthDAO) CreateAuth(auth *model.Auth) error {
-	_, err := dao.cm.DB.Exec(
+	_, err := dao.cm.DB.Exec(context.Background(),
 		`INSERT INTO auth
 		(token, user_id)
 		VALUES ($1, $2)`, auth.AuthToken, auth.ID)
@@ -33,7 +34,7 @@ func (dao *AuthDAO) CreateAuth(auth *model.Auth) error {
 func (dao *AuthDAO) GetUser(token string) (*model.User, error) {
 	var user model.User
 
-	row := dao.cm.DB.QueryRow(
+	row := dao.cm.DB.QueryRow(context.Background(),
 		`SELECT user_id, name, email FROM auth
 		INNER JOIN users ON users.id = auth.user_id
 		WHERE token = $1`, token,
@@ -50,7 +51,7 @@ func (dao *AuthDAO) GetUser(token string) (*model.User, error) {
 }
 
 func (dao *AuthDAO) DeleteAuth(token string) error {
-	_, err := dao.cm.DB.Exec(
+	_, err := dao.cm.DB.Exec(context.Background(),
 		`DELETE FROM auth
 		WHERE token = $1`, token,
 	)

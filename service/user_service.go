@@ -11,6 +11,7 @@ import (
 	"github.com/ryangladden/archivelens-go/db"
 	"github.com/ryangladden/archivelens-go/model"
 	requests "github.com/ryangladden/archivelens-go/request"
+	"github.com/ryangladden/archivelens-go/response"
 )
 
 var validate = validator.New()
@@ -25,21 +26,19 @@ func NewUserService(userDao *db.UserDAO) *UserService {
 	}
 }
 
-func (s *UserService) CreateUser(request *requests.CreateUserRequest) error {
+func (s *UserService) CreateUser(request *requests.CreateUserRequest) (*response.LoginResponse, error) {
 	userModel, err := createUserModel(request)
 	log.Info().Msgf("Creating user with email: %s", request.Email)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating user model")
-		return fmt.Errorf("error creating user model: %w", err)
+		return nil, fmt.Errorf("error creating user model: %w", err)
 	}
 
-	err = s.userDao.CreateUser(userModel)
-
-	if err != nil {
-		return err
+	if err = s.userDao.CreateUser(userModel); err != nil {
+		return nil, err
 	}
 
-	return nil
+	return &response.LoginResponse{Email: userModel.Email, Name: userModel.Name}, nil
 }
 
 func generateHashedPassword(password string) ([]byte, error) {

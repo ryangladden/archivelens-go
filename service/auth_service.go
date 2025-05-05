@@ -9,6 +9,7 @@ import (
 	errs "github.com/ryangladden/archivelens-go/err"
 	"github.com/ryangladden/archivelens-go/model"
 	"github.com/ryangladden/archivelens-go/request"
+	"github.com/ryangladden/archivelens-go/response"
 )
 
 type AuthService struct {
@@ -23,7 +24,7 @@ func NewAuthService(authDao *db.AuthDAO, userDao *db.UserDAO) *AuthService {
 	}
 }
 
-func (s *AuthService) CreateAuth(request request.LoginRequest) (string, *model.User, error) {
+func (s *AuthService) CreateAuth(request request.LoginRequest) (string, *response.LoginResponse, error) {
 	user, err := s.userDao.GetUserByField("email", request.Email)
 	if user == nil {
 		log.Error().Msgf("User not found with email: %s", request.Email)
@@ -49,7 +50,7 @@ func (s *AuthService) CreateAuth(request request.LoginRequest) (string, *model.U
 	if err != nil {
 		return "", nil, err
 	}
-	return authModel.AuthToken, user, nil
+	return authModel.AuthToken, &response.LoginResponse{Email: user.Email, Name: user.Name}, nil
 }
 
 func (s *AuthService) ValidateToken(token string) (*model.User, error) {

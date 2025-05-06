@@ -36,14 +36,17 @@ type Server struct {
 	userHandler     *handler.UserHandler
 	authHandler     *handler.AuthHandler
 	documentHandler *handler.DocumentHandler
+	personHandler   *handler.PersonHandler
 
 	userService     *service.UserService
 	authService     *service.AuthService
 	documentService *service.DocumentService
+	personService   *service.PersonService
 
 	userDao     *db.UserDAO
 	authDao     *db.AuthDAO
 	documentDao *db.DocumentDAO
+	personDao   *db.PersonDAO
 
 	router *routes.Router
 }
@@ -66,7 +69,11 @@ func NewServer() *Server {
 	documentService := service.NewDocumentService(documentDao, storageManager)
 	documentHandler := handler.NewDocumentHandler(documentService)
 
-	router := routes.NewRouter(userHandler, authHandler, documentHandler)
+	personDao := db.NewPersonDAO(connectionManager)
+	personService := service.NewPersonService(personDao, storageManager)
+	personHandler := handler.NewPersonHandler(personService)
+
+	router := routes.NewRouter(userHandler, authHandler, documentHandler, personHandler)
 
 	return &Server{
 		connectionManager: connectionManager,
@@ -75,14 +82,17 @@ func NewServer() *Server {
 		userHandler:     userHandler,
 		authHandler:     authHandler,
 		documentHandler: documentHandler,
+		personHandler:   personHandler,
 
 		userService:     userService,
 		authService:     authService,
 		documentService: documentService,
+		personService:   personService,
 
 		userDao:     userDao,
 		authDao:     authDao,
 		documentDao: documentDao,
+		personDao:   personDao,
 
 		router: router,
 	}

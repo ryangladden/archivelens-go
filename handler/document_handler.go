@@ -36,12 +36,16 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 	userID, ok := val.(uuid.UUID)
 	if !ok {
 		log.Error().Msg("Unable to obtain user_id from context")
-		c.AbortWithStatus(500)
+		c.AbortWithStatus(403)
 		return
 	}
 	log.Debug().Interface("user", userID)
 	request.Owner = userID
 	uuid, err := h.documentService.CreateDocument(request)
+	if err != nil {
+		c.AbortWithStatus(500)
+		return
+	}
 	fmt.Print(uuid)
 	c.JSON(200, gin.H{"form": request})
 	// c.JSON(200, gin.H{"title": file.Filename})

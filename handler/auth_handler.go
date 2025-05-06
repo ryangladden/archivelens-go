@@ -74,14 +74,17 @@ func (h *AuthHandler) GetSession(c *gin.Context) {
 }
 
 func (h *AuthHandler) AuthenticateMiddleware() gin.HandlerFunc {
+	log.Debug().Msg("AuthenticatedMiddleware implemented")
 	return func(c *gin.Context) {
+		log.Debug().Msg("AuthenticatedMiddleware called")
 		token, err := c.Cookie("archive_lens_access_token")
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}
-
+		log.Debug().Msgf("Token from database: %s", token)
 		user, err := h.authService.ValidateToken(token)
+
 		if err == errs.ErrDB {
 			c.AbortWithStatus(500)
 			return
@@ -89,7 +92,7 @@ func (h *AuthHandler) AuthenticateMiddleware() gin.HandlerFunc {
 			c.AbortWithStatus(401)
 			return
 		}
-
+		log.Debug().Msgf("Setting user in gin context: %s", user.ID)
 		c.Set("user", user.ID)
 		c.Next()
 	}

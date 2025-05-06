@@ -10,16 +10,18 @@ type Router struct {
 	userHandler     *handler.UserHandler
 	authHandler     *handler.AuthHandler
 	documentHandler *handler.DocumentHandler
+	personHandler   *handler.PersonHandler
 	routes          *gin.Engine
 }
 
-func NewRouter(userHandler *handler.UserHandler, authHandler *handler.AuthHandler, documentHandler *handler.DocumentHandler) *Router {
+func NewRouter(userHandler *handler.UserHandler, authHandler *handler.AuthHandler, documentHandler *handler.DocumentHandler, personHandler *handler.PersonHandler) *Router {
 	r := gin.Default()
 
 	router := &Router{
 		userHandler:     userHandler,
 		authHandler:     authHandler,
 		documentHandler: documentHandler,
+		personHandler:   personHandler,
 		routes:          r,
 	}
 
@@ -59,12 +61,13 @@ func (r *Router) registerRoutes() {
 		// 	documents.PATCH("/:id", UpdateDocument)
 		// 	documents.DELETE("/:id", DeleteDocument)
 	}
-	// persons := v1.Group("/persons")
-	// {
-	// 	persons.GET("", GetPersons)
-	// 	persons.POST("", CreatePerson)
-	// 	persons.GET("/:id", GetPerson)
-	// 	persons.PATCH("/:id", UpdatePerson)
-	// 	persons.DELETE("/:id", DeletePerson)
-	// }
+	persons := v1.Group("/persons")
+	persons.Use(r.authHandler.AuthenticateMiddleware())
+	{
+		// persons.GET("", GetPersons)
+		persons.POST("", r.personHandler.CreatePerson)
+		// 	persons.GET("/:id", GetPerson)
+		// 	persons.PATCH("/:id", UpdatePerson)
+		// 	persons.DELETE("/:id", DeletePerson)
+	}
 }

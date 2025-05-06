@@ -3,7 +3,10 @@ package storage
 import (
 	"context"
 	"mime/multipart"
+	"path/filepath"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	errs "github.com/ryangladden/archivelens-go/err"
 
@@ -41,6 +44,11 @@ func s3Init(minioClient *minio.Client, s3bucketName string, s3location string) {
 			log.Fatal().Err(err).Msgf("Failed to initialize bucket \"%s\"", s3bucketName)
 		}
 	}
+}
+
+func (sm *StorageManager) GenerateObjectKey(filename string, id uuid.UUID, directory string) string {
+	extension := strings.ToLower(filepath.Ext(filename))
+	return filepath.Join(directory, id.String()+extension)
 }
 
 func (sm *StorageManager) UploadFile(file *multipart.FileHeader, key string) error {

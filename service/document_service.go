@@ -1,11 +1,6 @@
 package service
 
 import (
-	"fmt"
-	"mime/multipart"
-	"path/filepath"
-	"strings"
-
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/ryangladden/archivelens-go/db"
@@ -27,28 +22,20 @@ func NewDocumentService(documentDao *db.DocumentDAO, storageManager *storage.Sto
 }
 
 func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) (string, error) {
-	document := generateDocumentModel(request)
-	s.uploadToS3(request.File, document.S3Key)
+	document := s.generateDocumentModel(request)
+	err := s.storageManager.UploadFile(request.File, document.S3Key)
+	if err != nil {
+		return "", err
+	}
 	authorships := generateAuthorshipArray(document.ID.String(), request)
-	s.documentDao.CreateDocument(request.Owner, document, authorships)
+	err = s.documentDao.CreateDocument(request.Owner, document, authorships)
+	if err != nil {
+		return "", err
+	}
 	return "", nil
 }
 
-func (s *DocumentService) uploadToS3(fileHeader *multipart.FileHeader, key string) error {
-	err := s.storageManager.UploadFile(fileHeader, key)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func generateObjectKey(originalFileName string, uuid uuid.UUID) string {
-	extension := strings.ToLower(filepath.Ext(originalFileName))
-	key := fmt.Sprintf(uuid.String(), extension)
-	return key
-}
-
-func generateDocumentModel(request request.CreateDocumentRequest) *model.Document {
+func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRequest) *model.Document {
 	var document model.Document
 	document.Title = request.Title
 	document.Location = request.Location
@@ -59,7 +46,7 @@ func generateDocumentModel(request request.CreateDocumentRequest) *model.Documen
 		log.Error().Err(err).Msgf("Error generating UUID for document titled \"%s\"", request.Title)
 	}
 	document.ID = id
-	document.S3Key = generateObjectKey(request.File.Filename, id)
+	document.S3Key = s.storageManager.GenerateObjectKey(request.File.Filename, id, "documents")
 	return &document
 }
 

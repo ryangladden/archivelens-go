@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/rs/zerolog/log"
 	errs "github.com/ryangladden/archivelens-go/err"
 	"github.com/ryangladden/archivelens-go/model"
 )
@@ -37,23 +38,26 @@ func (dao *DocumentDAO) CreateDocument(owner uuid.UUID, document *model.Document
 
 	tx, err := dao.cm.DB.Begin(ctx)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to begin transaction")
 		return err
 	}
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx,
 		`INSERT INTO documents
-    	(id, title, location, date, )
-		VALUES $1, $2, $3, $4 $5`,
+    	(id, title, location, date, s3_key)
+		VALUES ($1, $2, $3, $4, $5)`,
 		document.ID.String(), document.Title,
 		document.Location, document.Date,
 		document.S3Key)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to insert document into documents table")
 		return err
 	}
 
 	rows := [][]any{}
 	for i, a := range authorships {
+		log.Debug().Msgf("authorship docId: %s, personId: %s, role: %s", a.PersonID, a.DocumentID, a.Role)
 		rows[i] = []any{a.PersonID, a.DocumentID, a.Role}
 	}
 
@@ -64,7 +68,8 @@ func (dao *DocumentDAO) CreateDocument(owner uuid.UUID, document *model.Document
 		pgx.CopyFromRows(rows),
 	)
 	if err != nil {
-
+		log.Error().Err(err).Msg("Failed to update authorship table")
+		return err
 	}
 	if int(copyCount) != len(authorships) {
 		return errs.ErrDB
@@ -74,8 +79,9 @@ func (dao *DocumentDAO) CreateDocument(owner uuid.UUID, document *model.Document
 		`INSERT INTO ownership
 		(user_id, document_id, role)
 		VALUES $1, $2, $3`,
-		owner.String, document.ID, "author")
+		owner.String, document.ID, "owner")
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to update ownership table")
 		return err
 	}
 

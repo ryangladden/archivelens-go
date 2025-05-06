@@ -7,9 +7,9 @@ import (
 )
 
 type Document struct {
-	ID       uuid.UUID `json:"id validate:"uuid"`
-	Title    string    `json:"title"`
-	Date     time.Time `json:"date"`
-	Location string    `json:"location"`
-	S3Key    string    `json:"s3key"`
+	ID       uuid.UUID  `json:"id`
+	Title    string     `json:"title"`
+	Date     *time.Time `json:"date"`
+	Location *string    `json:"location"`
+	S3Key    string     `json:"s3key"`
 }

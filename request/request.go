@@ -24,8 +24,17 @@ type CreateDocumentRequest struct {
 	Coauthors []string              `form:"coauthors"`
 	Mentions  []string              `form:"mentions"`
 	Recipient string                `form:"recipient"`
-	Date      time.Time             `form:"date"`
-	Location  string                `form:"location" `
+	Date      *time.Time            `form:"date"`
+	Location  *string               `form:"location" `
 	File      *multipart.FileHeader `form:"file" binding:"required"`
 	Owner     uuid.UUID
+}
+
+type CreatePersonRequest struct {
+	Name    string                `form:"name" binding:"required"`
+	Birth   *time.Time            `form:"birth"`
+	Death   *time.Time            `form:"death"`
+	Summary *string               `form:"summary"`
+	Avatar  *multipart.FileHeader `form:"file"`
+	Owner   uuid.UUID
 }

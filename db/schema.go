@@ -18,13 +18,14 @@ func Init(db *pgx.Conn) {
 	createTagsTable(db)
 	createTaggingTable(db)
 	createAuthTable(db)
+	createUsersPersonsTable(db)
 }
 
 func createDocumentTable(db *pgx.Conn) {
 	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS documents (
 		id uuid NOT NULL,
 		title TEXT NOT NULL,
-		date TEXT,
+		date DATE,
 		location TEXT,
 		s3_key TEXT NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -43,6 +44,10 @@ func createPersonsTable(db *pgx.Conn) {
 	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS persons (
 		id uuid NOT NULL,
 		name TEXT NOT NULL,
+		birth DATE,
+		death DATE,
+		summary TEXT,
+		s3_key TEXT,
 		metadata JSONB,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -62,6 +67,7 @@ func createUsersTable(db *pgx.Conn) {
 		name TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
 		password BYTEA NOT NULL,
+		s3_key TEXT,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (id)
@@ -155,7 +161,8 @@ func createTaggingTable(db *pgx.Conn) {
 }
 
 func createAuthTable(db *pgx.Conn) {
-	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS auth (
+	_, err := db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS auth (
 		token uuid NOT NULL,
 		user_id uuid NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -169,6 +176,20 @@ func createAuthTable(db *pgx.Conn) {
 	}
 
 	createUpdatedAtTrigger(db, "documents")
+}
+
+func createUsersPersonsTable(db *pgx.Conn) {
+	_, err := db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS users_persons (
+		user_id uuid NOT NULL,
+		person_id uuid NOT NULL,
+		role role_enum NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users (id),
+		FOREIGN KEY (person_id) REFERENCES persons (id)
+		)`)
+	if err != nil {
+		log.Fatal().Err(err).Msg("DB initialization failed to create users_persons table")
+	}
 }
 
 func createUpdatedAtFunction(db *pgx.Conn) {

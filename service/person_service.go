@@ -112,8 +112,12 @@ func (s *PersonService) generatePersonResponse(person model.Person) *response.Pe
 }
 
 func generateListPersonsFilter(request request.ListPersonsRequest) *model.ListPersonsFilter {
+	nameMatch := ""
+	if request.NameMatch != nil {
+		nameMatch = strings.ToLower(*request.NameMatch)
+	}
 	filter := model.ListPersonsFilter{
-		NameMatch:    request.NameMatch,
+		NameMatch:    &nameMatch,
 		BirthMin:     request.BirthMin,
 		BirthMax:     request.BirthMax,
 		DeathMin:     request.DeathMin,

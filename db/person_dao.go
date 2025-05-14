@@ -132,7 +132,10 @@ func readPersonListRows(rows pgx.Rows) []model.Person {
 			log.Error().Err(err).Msgf("Failed to scan row")
 			continue
 		}
-		log.Debug().Msgf("%s %s %s %s %s", person.FirstName, person.LastName, person.Birth, person.Death, person.ID)
+		if s3key.Status != pgtype.Null {
+			person.S3Key = &s3key.String
+		}
+		log.Debug().Msgf("%s %s %s %s %s %s", person.FirstName, person.LastName, person.Birth, person.Death, person.ID, person)
 		persons = append(persons, person)
 	}
 	return persons

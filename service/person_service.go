@@ -59,9 +59,18 @@ func (s *PersonService) ListPersons(request request.ListPersonsRequest) (*respon
 		TotalPages:     int(math.Ceil(float64(personPage.TotalPersons) / float64(filter.Limit))),
 	}
 	for _, person := range personPage.Persons {
-		personList.Persons = append(personList.Persons, generatePersonResponse(person))
+		personList.Persons = append(personList.Persons, *s.generatePersonResponse(person))
 	}
 	return &personList, nil
+}
+
+func (s *PersonService) GetPerson(request request.GetPersonRequest) (*response.PersonResponse, error) {
+	person, err := s.personDao.GetPerson(request.UserID, request.PersonID)
+	if err != nil {
+		return nil, err
+	}
+	response := s.generatePersonResponse(*person)
+	return response, nil
 }
 
 func (s *PersonService) generatePersonModel(request *request.CreatePersonRequest) (*model.Person, error) {
@@ -88,17 +97,18 @@ func (s *PersonService) generatePersonModel(request *request.CreatePersonRequest
 	return &person, nil
 }
 
-func generatePersonResponse(person model.Person) response.PersonResponse {
+func (s *PersonService) generatePersonResponse(person model.Person) *response.PersonResponse {
 	response := response.PersonResponse{
-		ID:        person.ID,
-		FirstName: person.FirstName,
-		LastName:  person.LastName,
-		Birth:     person.Birth,
-		Death:     person.Death,
-		Summary:   person.Summary,
-		Role:      *person.Role,
+		ID:           person.ID,
+		FirstName:    person.FirstName,
+		LastName:     person.LastName,
+		Birth:        person.Birth,
+		Death:        person.Death,
+		Summary:      person.Summary,
+		Role:         *person.Role,
+		PresignedUrl: s.storageManager.GeneratePresignedURL(person.S3Key),
 	}
-	return response
+	return &response
 }
 
 func generateListPersonsFilter(request request.ListPersonsRequest) *model.ListPersonsFilter {

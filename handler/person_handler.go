@@ -81,6 +81,25 @@ func (h *PersonHandler) ListPersons(c *gin.Context) {
 	c.JSON(200, persons)
 }
 
+func (h *PersonHandler) GetPerson(c *gin.Context) {
+	request := request.GetPersonRequest{
+		UserID: utils.GetUserIDFromContext(c),
+	}
+	var err error
+	request.PersonID, err = utils.GetParamsAsUUID(c, "id")
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get person using by id")
+		c.AbortWithStatus(400)
+		return
+	}
+	person, err := h.personService.GetPerson(request)
+	if err != nil {
+		c.AbortWithStatus(500)
+	}
+
+	c.JSON(200, person)
+}
+
 // func createListRequestFromParams(c *gin.Context) (*request.ListPersonsRequest, error) {
 // 	var request request.ListPersonsRequest
 // 	request.UserID = utils.GetUserIDFromContext(c)

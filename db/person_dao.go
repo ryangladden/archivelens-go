@@ -70,6 +70,25 @@ func (dao *PersonDAO) CreatePerson(person *model.Person, owner uuid.UUID) error 
 	return nil
 }
 
+func (dao *PersonDAO) GetPerson(userID uuid.UUID, personID uuid.UUID) (*model.Person, error) {
+
+	var person model.Person
+	var idHolder string
+	row := dao.cm.DB.QueryRow(context.Background(),
+		`SELECT person_id, first_name, last_name, birth, death, summary, s3_key, role, user_id
+		FROM users_persons
+		JOIN persons ON users_persons.person_id = persons.id
+		WHERE person_id = $1 AND user_id = $2`,
+		personID.String(), userID.String())
+
+	err := row.Scan(&person.ID, &person.FirstName, &person.LastName, &person.Birth, &person.Death, &person.Summary, &person.S3Key, &person.Role, &idHolder)
+	if err != nil {
+		log.Error().Err(err).Msgf("Error getting row for person with ID %s owned by %s", personID.String(), userID.String())
+		return nil, errs.ErrDB
+	}
+	return &person, nil
+}
+
 func (dao *PersonDAO) ListPersons(filter *model.ListPersonsFilter) (*PersonPage, error) {
 
 	var personPage PersonPage

@@ -3,8 +3,10 @@ package storage
 import (
 	"context"
 	"mime/multipart"
+	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -70,6 +72,18 @@ func (sm *StorageManager) UploadFile(file *multipart.FileHeader, key *string) er
 	_, err = sm.minioClient.PutObject(ctx, sm.bucketName, *key, reader, file.Size, minio.PutObjectOptions{})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to put in the bucket")
+	}
+	return nil
+}
+
+func (sm *StorageManager) GeneratePresignedURL(key *string) *string {
+	if key != nil {
+		reqParams := make(url.Values)
+		url, err := sm.minioClient.PresignedGetObject(context.Background(), sm.bucketName, *key, 15*time.Second, reqParams)
+		if err == nil {
+			presignedUrl := url.String()
+			return &presignedUrl
+		}
 	}
 	return nil
 }

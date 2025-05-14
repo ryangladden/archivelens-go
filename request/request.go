@@ -54,3 +54,8 @@ type ListPersonsRequest struct {
 	ExcludeRoles *[]string  `form:"exclude_roles"`
 	Order        *string    `form:"order"`
 }
+
+type GetPersonRequest struct {
+	UserID   uuid.UUID
+	PersonID uuid.UUID
+}

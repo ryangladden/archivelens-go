@@ -170,7 +170,7 @@ func createAuthTable(db *pgx.Conn) {
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		expires_at TIMESTAMP WITH TIME ZONE DEFAULT now() + interval '1 day' * 180,
 		PRIMARY KEY (token),
-		FOREIGN KEY (user_id) REFERENCES users (id)
+		FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 		)`)
 
 	if err != nil {
@@ -186,8 +186,8 @@ func createUsersPersonsTable(db *pgx.Conn) {
 		user_id uuid NOT NULL,
 		person_id uuid NOT NULL,
 		role role_enum NOT NULL,
-		FOREIGN KEY (user_id) REFERENCES users (id),
-		FOREIGN KEY (person_id) REFERENCES persons (id)
+		FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+		FOREIGN KEY (person_id) REFERENCES persons (id) ON DELETE CASCADE
 		)`)
 	if err != nil {
 		log.Fatal().Err(err).Msg("DB initialization failed to create users_persons table")

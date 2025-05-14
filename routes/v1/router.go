@@ -66,7 +66,7 @@ func (r *Router) registerRoutes() {
 	{
 		persons.GET("", r.personHandler.ListPersons)
 		persons.POST("", r.personHandler.CreatePerson)
-		// 	persons.GET("/:id", GetPerson)
+		persons.GET("/:id", r.personHandler.GetPerson)
 		// 	persons.PATCH("/:id", UpdatePerson)
 		// 	persons.DELETE("/:id", DeletePerson)
 	}

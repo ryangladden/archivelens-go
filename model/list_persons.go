@@ -11,6 +11,7 @@ type ListPersonsFilter struct {
 	Limit        int
 	Page         int
 	SortBy       string
+	Order        string
 	BirthMin     *time.Time
 	BirthMax     *time.Time
 	DeathMin     *time.Time

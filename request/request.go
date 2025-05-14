@@ -52,4 +52,5 @@ type ListPersonsRequest struct {
 	DeathMin     *time.Time `form:"death_min" time_format:"2006-01-02" time_utc:"1"`
 	NameMatch    *string    `form:"name_match"`
 	ExcludeRoles *[]string  `form:"exclude_roles"`
+	Order        *string    `form:"order"`
 }

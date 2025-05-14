@@ -62,7 +62,7 @@ func (dao *PersonDAO) CreatePerson(person *model.Person, owner uuid.UUID) error 
 		log.Error().Err(err).Msgf("Error adding owner %s to new person %s %s", owner.String(), person.FirstName, person.LastName)
 		return err
 	}
-	if tx.Commit(ctx); err != nil {
+	if err = tx.Commit(ctx); err != nil {
 		tx.Rollback(ctx)
 		log.Error().Err(err).Msgf("Failed to create person %s %s", person.FirstName, person.LastName)
 		return errs.ErrDB
@@ -75,7 +75,6 @@ func (dao *PersonDAO) ListPersons(filter *model.ListPersonsFilter) (*PersonPage,
 	var personPage PersonPage
 	var totalPersons int
 	conditions := generateAndConditions(filter)
-	log.Debug().Msgf("Conditions: %s", *filter)
 	countQuery := fmt.Sprintf(`SELECT COUNT(*)
 		FROM persons
 		JOIN users_persons ON persons.id = users_persons.person_id
@@ -90,8 +89,8 @@ func (dao *PersonDAO) ListPersons(filter *model.ListPersonsFilter) (*PersonPage,
 		FROM persons
 		JOIN users_persons ON persons.id = users_persons.person_id
 		WHERE (user_id = $1%s)
-		ORDER BY %s
-		LIMIT $2 OFFSET $3`, conditions, filter.SortBy)
+		ORDER BY %s %s
+		LIMIT $2 OFFSET $3`, conditions, filter.SortBy, filter.Order)
 	log.Debug().Msgf("Querying for persons: %s", listQuery)
 
 	rows, err := dao.cm.DB.Query(context.Background(),

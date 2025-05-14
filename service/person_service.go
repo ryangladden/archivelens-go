@@ -52,13 +52,15 @@ func (s *PersonService) ListPersons(request request.ListPersonsRequest) (*respon
 	if err != nil {
 		return nil, err
 	}
-	var personList response.ListPersonsResponse
+	personList := response.ListPersonsResponse{
+		PersonsPerPage: filter.Limit,
+		PageNumber:     filter.Page + 1,
+		TotalPersons:   personPage.TotalPersons,
+		TotalPages:     int(math.Ceil(float64(personPage.TotalPersons) / float64(filter.Limit))),
+	}
 	for _, person := range personPage.Persons {
 		personList.Persons = append(personList.Persons, generatePersonResponse(person))
 	}
-	personList.PageNumber = filter.Page + 1
-	personList.TotalPersons = personPage.TotalPersons
-	personList.TotalPages = int(math.Ceil(float64(personPage.TotalPersons) / float64(filter.Limit)))
 	return &personList, nil
 }
 
@@ -108,6 +110,7 @@ func generateListPersonsFilter(request request.ListPersonsRequest) *model.ListPe
 		DeathMax:     request.DeathMax,
 		ExcludeRoles: parseExcludeRoles(request.ExcludeRoles),
 		SortBy:       parseSortBy(request.SortBy),
+		Order:        parseOrder(request.Order),
 	}
 	filter.UserID = request.UserID
 	log.Debug().Msgf("Filtering persons related to user with %s", filter.UserID)
@@ -154,4 +157,16 @@ func parseSortBy(request *string) string {
 	}
 	log.Debug().Msg("Sorting query by last_name")
 	return "last_name"
+}
+
+func parseOrder(request *string) string {
+	order := "ASC"
+	if request != nil {
+		log.Debug().Msgf("Parsed order, user requested order %s", *request)
+		if *request == "descending" {
+			order = "DESC"
+			return order
+		}
+	}
+	return order
 }

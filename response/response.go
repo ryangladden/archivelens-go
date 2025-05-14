@@ -22,8 +22,8 @@ type PersonResponse struct {
 	ID           uuid.UUID  `json:"id"`
 	FirstName    string     `json:"first_name"`
 	LastName     string     `json:"last_name"`
-	Birth        *time.Time `json:"birth"`
-	Death        *time.Time `json:"death" omitempty`
+	Birth        *time.Time `json:"birth" time_format:"2006-01-02" time_utc:"1"`
+	Death        *time.Time `json:"death" time_format:"2006-01-02" time_utc:"1"`
 	Summary      *string    `json:"summary"`
 	PresignedUrl *string    `json:"avatar"`
 	Role         string     `json:"role"`

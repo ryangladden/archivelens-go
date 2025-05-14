@@ -56,19 +56,20 @@ func (s *PersonService) ListPersons(request request.ListPersonsRequest) (*respon
 	for _, person := range personPage.Persons {
 		personList.Persons = append(personList.Persons, generatePersonResponse(person))
 	}
-	personList.PageNumber = filter.Page
+	personList.PageNumber = filter.Page + 1
 	personList.TotalPersons = personPage.TotalPersons
 	personList.TotalPages = int(math.Ceil(float64(personPage.TotalPersons) / float64(filter.Limit)))
 	return &personList, nil
 }
 
 func (s *PersonService) generatePersonModel(request *request.CreatePersonRequest) (*model.Person, error) {
-	var person model.Person
-	person.FirstName = request.FirstName
-	person.LastName = request.LastName
-	person.Birth = request.Birth
-	person.Death = request.Death
-	person.Summary = request.Summary
+	person := model.Person{
+		FirstName: request.FirstName,
+		LastName:  request.LastName,
+		Birth:     request.Birth,
+		Death:     request.Death,
+		Summary:   request.Summary,
+	}
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Error().Err(err).Msgf("Error generating uuid for new person %s %s", request.FirstName, request.LastName)
@@ -118,7 +119,7 @@ func generateListPersonsFilter(request request.ListPersonsRequest) *model.ListPe
 	if request.Page == nil {
 		filter.Page = 0
 	} else {
-		filter.Page = *request.Page
+		filter.Page = *request.Page - 1
 	}
 	return &filter
 }

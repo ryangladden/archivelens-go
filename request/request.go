@@ -13,9 +13,10 @@ type LoginRequest struct {
 }
 
 type CreateUserRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=8"`
-	Name     string `json:"name" binding:"required"`
+	Email     string `json:"email" binding:"required,email"`
+	Password  string `json:"password" binding:"required,min=8"`
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
 }
 
 type CreateDocumentRequest struct {
@@ -31,10 +32,24 @@ type CreateDocumentRequest struct {
 }
 
 type CreatePersonRequest struct {
-	Name    string                `form:"name" binding:"required"`
-	Birth   *time.Time            `form:"birth"`
-	Death   *time.Time            `form:"death"`
-	Summary *string               `form:"summary"`
-	Avatar  *multipart.FileHeader `form:"file"`
-	Owner   uuid.UUID
+	FirstName string                `form:"first_name" binding:"required"`
+	LastName  string                `form:"last_name" binding:"required"`
+	Birth     *time.Time            `form:"birth" time_format:"2006-01-02" time_utc:"1"`
+	Death     *time.Time            `form:"death" time_format:"2006-01-02" time_utc:"1"`
+	Summary   *string               `form:"summary"`
+	Avatar    *multipart.FileHeader `form:"file"`
+	Owner     uuid.UUID
+}
+
+type ListPersonsRequest struct {
+	UserID       uuid.UUID
+	Page         *int       `form:"page"`
+	Limit        *int       `form:"person_per_page"`
+	SortBy       *string    `form:"sort_by"`
+	BirthMax     *time.Time `form:"birth_max" time_format:"2006-01-02" time_utc:"1"`
+	BirthMin     *time.Time `form:"birth_min" time_format:"2006-01-02" time_utc:"1"`
+	DeathMax     *time.Time `form:"death_max" time_format:"2006-01-02" time_utc:"1"`
+	DeathMin     *time.Time `form:"death_min" time_format:"2006-01-02" time_utc:"1"`
+	NameMatch    *string    `form:"name_match"`
+	ExcludeRoles *[]string  `form:"exclude_roles"`
 }

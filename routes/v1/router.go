@@ -64,7 +64,7 @@ func (r *Router) registerRoutes() {
 	persons := v1.Group("/persons")
 	persons.Use(r.authHandler.AuthenticateMiddleware())
 	{
-		// persons.GET("", GetPersons)
+		persons.GET("", r.personHandler.ListPersons)
 		persons.POST("", r.personHandler.CreatePerson)
 		// 	persons.GET("/:id", GetPerson)
 		// 	persons.PATCH("/:id", UpdatePerson)

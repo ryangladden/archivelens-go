@@ -46,12 +46,13 @@ func s3Init(minioClient *minio.Client, s3bucketName string, s3location string) {
 	}
 }
 
-func (sm *StorageManager) GenerateObjectKey(filename string, id uuid.UUID, directory string) string {
+func (sm *StorageManager) GenerateObjectKey(filename string, id uuid.UUID, directory string) *string {
 	extension := strings.ToLower(filepath.Ext(filename))
-	return filepath.Join(directory, id.String()+extension)
+	key := filepath.Join(directory, id.String()+extension)
+	return &key
 }
 
-func (sm *StorageManager) UploadFile(file *multipart.FileHeader, key string) error {
+func (sm *StorageManager) UploadFile(file *multipart.FileHeader, key *string) error {
 
 	if sm.minioClient == nil {
 		log.Error().Msg("Minio client is offline")
@@ -66,7 +67,7 @@ func (sm *StorageManager) UploadFile(file *multipart.FileHeader, key string) err
 	defer reader.Close()
 
 	ctx := context.Background()
-	_, err = sm.minioClient.PutObject(ctx, sm.bucketName, key, reader, file.Size, minio.PutObjectOptions{})
+	_, err = sm.minioClient.PutObject(ctx, sm.bucketName, *key, reader, file.Size, minio.PutObjectOptions{})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to put in the bucket")
 	}

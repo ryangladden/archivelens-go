@@ -23,7 +23,7 @@ func NewDocumentService(documentDao *db.DocumentDAO, storageManager *storage.Sto
 
 func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) (string, error) {
 	document := s.generateDocumentModel(request)
-	err := s.storageManager.UploadFile(request.File, document.S3Key)
+	err := s.storageManager.UploadFile(request.File, &document.S3Key)
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +46,8 @@ func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRe
 		log.Error().Err(err).Msgf("Error generating UUID for document titled \"%s\"", request.Title)
 	}
 	document.ID = id
-	document.S3Key = s.storageManager.GenerateObjectKey(request.File.Filename, id, "documents")
+	s3Key := s.storageManager.GenerateObjectKey(request.File.Filename, id, "documents")
+	document.S3Key = *s3Key
 	return &document
 }
 

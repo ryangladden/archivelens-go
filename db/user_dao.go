@@ -20,8 +20,8 @@ func NewUserDAO(cm *ConnectionManager) *UserDAO {
 
 func (dao *UserDAO) CreateUser(user *model.User) error {
 	_, err := dao.cm.DB.Exec(context.Background(), `INSERT INTO users
-	(id, name, password, email)
-	VALUES ($1, $2, $3, $4)`, user.ID, user.Name, user.Password, user.Email)
+	(id, first_name, last_name, password, email)
+	VALUES ($1, $2, $3, $4, $5)`, user.ID, user.FirstName, user.LastName, user.Password, user.Email)
 	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
 		log.Error().Err(err).Msg("User with this email already exists")
 		return errs.ErrConflict
@@ -35,8 +35,8 @@ func (dao *UserDAO) CreateUser(user *model.User) error {
 
 func (dao *UserDAO) GetUserByField(field string, value string) (*model.User, error) {
 	var user model.User
-	query := fmt.Sprintf("SELECT id, name, email, password FROM users WHERE %s = $1", field)
-	err := dao.cm.DB.QueryRow(context.Background(), query, value).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+	query := fmt.Sprintf("SELECT id, first_name, last_name, email, password FROM users WHERE %s = $1", field)
+	err := dao.cm.DB.QueryRow(context.Background(), query, value).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password)
 	if err != nil {
 		log.Error().Err(err).Msgf("error retrieving user by %s", field)
 		return nil, fmt.Errorf("error retrieving user by %s: %v", field, err)

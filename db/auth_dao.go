@@ -35,11 +35,11 @@ func (dao *AuthDAO) GetUser(token string) (*model.User, error) {
 	var user model.User
 
 	row := dao.cm.DB.QueryRow(context.Background(),
-		`SELECT user_id, name, email FROM auth
+		`SELECT user_id, first_name, last_name, email FROM auth
 		INNER JOIN users ON users.id = auth.user_id
 		WHERE token = $1`, token,
 	)
-	if err := row.Scan(&user.ID, &user.Name, &user.Email); err == sql.ErrNoRows {
+	if err := row.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email); err == sql.ErrNoRows {
 		log.Warn().Err(err).Msgf("Failure to authenticate with token: %s", token)
 		return nil, errs.ErrUnauthorized
 	} else if err != nil {

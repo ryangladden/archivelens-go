@@ -64,8 +64,9 @@ func (h *AuthHandler) GetSession(c *gin.Context) {
 	user := getUserFromContext(c)
 	if user != nil {
 		var response = &response.LoginResponse{
-			Email: user.Email,
-			Name:  user.Name,
+			Email:     user.Email,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
 		}
 		c.JSON(200, response)
 		return

@@ -38,7 +38,7 @@ func (s *UserService) CreateUser(request *requests.CreateUserRequest) (*response
 		return nil, err
 	}
 
-	return &response.LoginResponse{Email: userModel.Email, Name: userModel.Name}, nil
+	return &response.LoginResponse{Email: userModel.Email, FirstName: userModel.FirstName, LastName: userModel.LastName}, nil
 }
 
 func generateHashedPassword(password string) ([]byte, error) {
@@ -53,7 +53,8 @@ func generateHashedPassword(password string) ([]byte, error) {
 func createUserModel(user *requests.CreateUserRequest) (*model.User, error) {
 	var userModel model.User
 	userModel.Email = user.Email
-	userModel.Name = user.Name
+	userModel.FirstName = user.FirstName
+	userModel.LastName = user.LastName
 	hashedPassword, err := generateHashedPassword(user.Password)
 	if err != nil {
 		return nil, err

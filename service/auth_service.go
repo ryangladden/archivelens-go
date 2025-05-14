@@ -50,7 +50,7 @@ func (s *AuthService) CreateAuth(request request.LoginRequest) (string, *respons
 	if err != nil {
 		return "", nil, err
 	}
-	return authModel.AuthToken, &response.LoginResponse{Email: user.Email, Name: user.Name}, nil
+	return authModel.AuthToken, &response.LoginResponse{Email: user.Email, FirstName: user.FirstName, LastName: user.LastName}, nil
 }
 
 func (s *AuthService) ValidateToken(token string) (*model.User, error) {

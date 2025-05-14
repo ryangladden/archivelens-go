@@ -24,7 +24,7 @@ func AuthenticateMiddleware(authService *service.AuthService) gin.HandlerFunc {
 			c.AbortWithStatus(401)
 			return
 		}
-		log.Info().Msgf("User: %s", user.Name)
+		log.Info().Msgf("User: %s %s", user.FirstName, user.LastName)
 		log.Debug().Msgf("Middleware: setting user_id %s", user.ID)
 		c.Set("user_id", user.ID)
 		c.Next()

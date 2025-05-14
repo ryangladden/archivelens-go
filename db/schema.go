@@ -43,7 +43,8 @@ func createDocumentTable(db *pgx.Conn) {
 func createPersonsTable(db *pgx.Conn) {
 	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS persons (
 		id uuid NOT NULL,
-		name TEXT NOT NULL,
+		first_name TEXT NOT NULL,
+		last_name TEXT NOT NULL,
 		birth DATE,
 		death DATE,
 		summary TEXT,
@@ -64,7 +65,8 @@ func createPersonsTable(db *pgx.Conn) {
 func createUsersTable(db *pgx.Conn) {
 	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS users (
 		id uuid NOT NULL,
-		name TEXT NOT NULL,
+		first_name TEXT NOT NULL,
+		last_name TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
 		password BYTEA NOT NULL,
 		s3_key TEXT,

@@ -25,10 +25,11 @@ func TestCreateUser(t *testing.T) {
 
 	// Create a new user
 	user := &model.User{
-		ID:       id,
-		Name:     "Test User",
-		Email:    "email@email.com",
-		Password: []byte("hashed-password"),
+		ID:        id,
+		FirstName: "Test",
+		LastName:  "User",
+		Email:     "email@email.com",
+		Password:  []byte("hashed-password"),
 	}
 	err = userDAO.CreateUser(user)
 	if err != nil {
@@ -37,12 +38,12 @@ func TestCreateUser(t *testing.T) {
 	// Verify the user was created
 	var createdUser model.User
 	err = userDAO.cm.DB.QueryRow(context.Background(),
-		"SELECT id, name, email, password FROM users WHERE id = $1", user.ID).Scan(
-		&createdUser.ID, &createdUser.Name, &createdUser.Email, &createdUser.Password)
+		"SELECT id, first_name, last_name, email, password FROM users WHERE id = $1", user.ID).Scan(
+		&createdUser.ID, &createdUser.FirstName, &createdUser.LastName, &createdUser.Email, &createdUser.Password)
 	if err != nil {
 		t.Fatalf("Failed to retrieve created user: %v", err)
 	}
-	if createdUser.ID != user.ID || createdUser.Name != user.Name || createdUser.Email != user.Email || string(createdUser.Password) != string(user.Password) {
+	if createdUser.ID != user.ID || createdUser.FirstName != user.FirstName || createdUser.LastName != user.LastName || createdUser.Email != user.Email || string(createdUser.Password) != string(user.Password) {
 		t.Errorf("Created user does not match expected user: got %+v, want %+v", createdUser, user)
 	}
 	// Clean up the created user
@@ -65,17 +66,19 @@ func TestCreateExistingEmail(t *testing.T) {
 
 	// Create a new user
 	user := &model.User{
-		ID:       id,
-		Name:     "Test User",
-		Email:    "email@email.com",
-		Password: []byte("hashed-password"),
+		ID:        id,
+		FirstName: "Test",
+		LastName:  "User",
+		Email:     "email@email.com",
+		Password:  []byte("hashed-password"),
 	}
 
 	existingUser := &model.User{
-		ID:       idNew,
-		Name:     "Existing User",
-		Email:    "email@email.com",
-		Password: []byte("hashed-password"),
+		ID:        idNew,
+		FirstName: "Existing",
+		LastName:  "User",
+		Email:     "email@email.com",
+		Password:  []byte("hashed-password"),
 	}
 	err = userDAO.CreateUser(user)
 	if err != nil {

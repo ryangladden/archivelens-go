@@ -6,16 +6,17 @@ import (
 	"github.com/google/uuid"
 )
 
-type ListPersonsFilter struct {
+type ListDocumentsFilter struct {
 	UserID       uuid.UUID
 	Limit        int
 	Page         int
 	SortBy       string
 	Order        string // ascending or descending
-	BirthMin     *time.Time
-	BirthMax     *time.Time
-	DeathMin     *time.Time
-	DeathMax     *time.Time
+	DateMin      *time.Time
+	DateMax      *time.Time
 	ExcludeRoles *string
-	NameMatch    *string
+	TitleMatch   *string
+	ExcludeType  *string
+	Authors      *string
+	IncludeTags  *string
 }

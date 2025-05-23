@@ -22,11 +22,20 @@ func Init(db *pgx.Conn) {
 }
 
 func createDocumentTable(db *pgx.Conn) {
-	_, err := db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS documents (
+
+	_, err := db.Exec(context.Background(), `DO $$ BEGIN
+		CREATE TYPE document_type AS ENUM 
+			('letter', 'journal', 'audio');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;`)
+
+	_, err = db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS documents (
 		id uuid NOT NULL,
 		title TEXT NOT NULL,
 		date DATE,
 		location TEXT,
+		type document_type NOT NULL,
 		s3_key TEXT NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),

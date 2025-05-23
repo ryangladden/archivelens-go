@@ -55,8 +55,9 @@ func (r *Router) registerRoutes() {
 	documents := v1.Group("/documents")
 	documents.Use(r.authHandler.AuthenticateMiddleware())
 	{
-		// documents.GET("/:id", r.documentHandler.GetDocument)
+		documents.GET("/:id", r.documentHandler.GetDocument)
 		documents.POST("/upload", r.documentHandler.CreateDocument)
+		documents.GET("", r.documentHandler.ListDocuments)
 		// 	documents.GET("/:id", GetDocument)
 		// 	documents.PATCH("/:id", UpdateDocument)
 		// 	documents.DELETE("/:id", DeleteDocument)

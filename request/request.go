@@ -21,10 +21,11 @@ type CreateUserRequest struct {
 
 type CreateDocumentRequest struct {
 	Title     string                `form:"title" binding:"required"`
-	Author    string                `form:"author"`
-	Coauthors []string              `form:"coauthors"`
-	Mentions  []string              `form:"mentions"`
-	Recipient string                `form:"recipient"`
+	Type      string                `form:"type" binding:"required"`
+	Author    *string               `form:"author"`
+	Coauthors *[]string             `form:"coauthors"`
+	Mentions  *[]string             `form:"mentions"`
+	Recipient *string               `form:"recipient"`
 	Date      *time.Time            `form:"date"`
 	Location  *string               `form:"location" `
 	File      *multipart.FileHeader `form:"file" binding:"required"`
@@ -52,10 +53,25 @@ type ListPersonsRequest struct {
 	DeathMin     *time.Time `form:"death_min" time_format:"2006-01-02" time_utc:"1"`
 	NameMatch    *string    `form:"name_match"`
 	ExcludeRoles *[]string  `form:"exclude_roles"`
-	Order        *string    `form:"order"`
+	Order        *string    `form:"order"` // ascending or descending
 }
 
 type GetPersonRequest struct {
 	UserID   uuid.UUID
 	PersonID uuid.UUID
+}
+
+type ListDocumentsRequest struct {
+	UserID       uuid.UUID
+	Page         *int         `form:"page"`
+	Limit        *int         `form:"documents_per_page"`
+	SortBy       *string      `form:"sort_by"`
+	DateMin      *time.Time   `form:"date_min" time_format:"2006-01-02" time_utc:"1"`
+	DateMax      *time.Time   `form:"date_max" time_format:"2006-01-02" time_utc:"1"`
+	IncludeTags  *[]string    `form:"tags"`
+	TitleMatch   *string      `form:"title_match"`
+	Authors      *[]uuid.UUID `form:"authors"`
+	ExcludeRoles *[]string    `form:"exclude_roles"`
+	Order        *string      `form:"order"` // ascending or descending
+	ExcludeType  *[]string    `form:"exclude_type"`
 }

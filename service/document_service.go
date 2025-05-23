@@ -1,11 +1,11 @@
 package service
 
 import (
-	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
+	"fmt"
+
 	"github.com/ryangladden/archivelens-go/db"
-	"github.com/ryangladden/archivelens-go/model"
 	"github.com/ryangladden/archivelens-go/request"
+	"github.com/ryangladden/archivelens-go/response"
 	"github.com/ryangladden/archivelens-go/storage"
 )
 
@@ -35,39 +35,12 @@ func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) 
 	return "", nil
 }
 
-func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRequest) *model.Document {
-	var document model.Document
-	document.Title = request.Title
-	document.Location = request.Location
-	document.Date = request.Date
-
-	id, err := uuid.NewV7()
+func (s *DocumentService) ListDocuments(request request.ListDocumentsRequest) ([]response.ListDocumentsResponse, error) {
+	filter := s.generateListDocumentsFilter(request)
+	documentPage, err := s.documentDao.ListDocuments(filter)
 	if err != nil {
-		log.Error().Err(err).Msgf("Error generating UUID for document titled \"%s\"", request.Title)
+		return nil, err
 	}
-	document.ID = id
-	s3Key := s.storageManager.GenerateObjectKey(request.File.Filename, id, "documents")
-	document.S3Key = *s3Key
-	return &document
-}
-
-func createAuthorship(personIds []string, documentId string, role string) []model.Authorship {
-	var authorships []model.Authorship
-	for _, id := range personIds {
-		authorships = append(authorships, model.Authorship{
-			PersonID:   id,
-			DocumentID: documentId,
-			Role:       role,
-		})
-	}
-	return authorships
-}
-
-func generateAuthorshipArray(documentId string, request request.CreateDocumentRequest) []model.Authorship {
-	var authorships []model.Authorship
-	authorships = append(authorships, createAuthorship([]string{request.Author}, documentId, "author")...)
-	authorships = append(authorships, createAuthorship(request.Coauthors, documentId, "coauthor")...)
-	authorships = append(authorships, createAuthorship(request.Mentions, documentId, "mentioned")...)
-	authorships = append(authorships, createAuthorship([]string{request.Recipient}, documentId, "recipient")...)
-	return authorships
+	fmt.Println(documentPage.Documents[len(documentPage.Documents)-1].Title)
+	return []response.ListDocumentsResponse{}, nil
 }

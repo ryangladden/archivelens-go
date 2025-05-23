@@ -1,9 +1,7 @@
 package service
 
 import (
-	"fmt"
 	"math"
-	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -117,13 +115,14 @@ func generateListPersonsFilter(request request.ListPersonsRequest) *model.ListPe
 		nameMatch = strings.ToLower(*request.NameMatch)
 	}
 	filter := model.ListPersonsFilter{
+		UserID:       request.UserID,
 		NameMatch:    &nameMatch,
 		BirthMin:     request.BirthMin,
 		BirthMax:     request.BirthMax,
 		DeathMin:     request.DeathMin,
 		DeathMax:     request.DeathMax,
 		ExcludeRoles: parseExcludeRoles(request.ExcludeRoles),
-		SortBy:       parseSortBy(request.SortBy),
+		SortBy:       parseSortBy(request.SortBy, []string{"first_name", "last_name", "birth", "death"}, "last_name"),
 		Order:        parseOrder(request.Order),
 	}
 	filter.UserID = request.UserID
@@ -139,48 +138,4 @@ func generateListPersonsFilter(request request.ListPersonsRequest) *model.ListPe
 		filter.Page = *request.Page - 1
 	}
 	return &filter
-}
-
-func parseExcludeRoles(request *[]string) *string {
-	if request != nil {
-		roleList := *request
-		if len(roleList) == 0 {
-			return nil
-		}
-		roles := make([]string, 0, len(roleList))
-		for _, role := range roleList {
-			if slices.Contains([]string{"editor", "owner", "viewer"}, role) {
-				formattedRole := fmt.Sprintf("\"%s\"", role)
-				roles = append(roles, formattedRole)
-			}
-		}
-		formattedString := strings.Join(roles, ", ")
-		return &formattedString
-	}
-	return nil
-}
-
-func parseSortBy(request *string) string {
-	if request != nil {
-		log.Debug().Msgf("Parsed sort by, user requested sortby %s", *request)
-		switch *request {
-		case "first_name", "birth", "death":
-			log.Debug().Msgf("Sorting query by %s", *request)
-			return *request
-		}
-	}
-	log.Debug().Msg("Sorting query by last_name")
-	return "last_name"
-}
-
-func parseOrder(request *string) string {
-	order := "ASC"
-	if request != nil {
-		log.Debug().Msgf("Parsed order, user requested order %s", *request)
-		if *request == "descending" {
-			order = "DESC"
-			return order
-		}
-	}
-	return order
 }

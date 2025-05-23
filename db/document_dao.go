@@ -14,6 +14,11 @@ type DocumentDAO struct {
 	cm *ConnectionManager
 }
 
+type DocumentPage struct {
+	Documents      []model.Document
+	TotalDocuments int
+}
+
 func NewDocumentDAO(cm *ConnectionManager) *DocumentDAO {
 	return &DocumentDAO{
 		cm: cm,
@@ -45,20 +50,20 @@ func (dao *DocumentDAO) CreateDocument(owner uuid.UUID, document *model.Document
 
 	_, err = tx.Exec(ctx,
 		`INSERT INTO documents
-    	(id, title, location, date, s3_key)
-		VALUES ($1, $2, $3, $4, $5)`,
+    	(id, title, location, date, s3_key, type)
+		VALUES ($1, $2, $3, $4, $5, $6)`,
 		document.ID.String(), document.Title,
 		document.Location, document.Date,
-		document.S3Key)
+		document.S3Key, document.Type)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to insert document into documents table")
 		return err
 	}
 
 	rows := [][]any{}
-	for i, a := range authorships {
-		log.Debug().Msgf("authorship docId: %s, personId: %s, role: %s", a.PersonID, a.DocumentID, a.Role)
-		rows[i] = []any{a.PersonID, a.DocumentID, a.Role}
+	for _, a := range authorships {
+		log.Debug().Msgf("authorship docId: %s, personId: %s, role: %s", a.DocumentID, a.PersonID, a.Role)
+		rows = append(rows, []any{a.PersonID, a.DocumentID, a.Role})
 	}
 
 	copyCount, err := tx.CopyFrom(
@@ -78,8 +83,8 @@ func (dao *DocumentDAO) CreateDocument(owner uuid.UUID, document *model.Document
 	_, err = tx.Exec(ctx,
 		`INSERT INTO ownership
 		(user_id, document_id, role)
-		VALUES $1, $2, $3`,
-		owner.String, document.ID, "owner")
+		VALUES ($1, $2, $3)`,
+		owner.String(), document.ID.String(), "owner")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to update ownership table")
 		return err
@@ -90,4 +95,20 @@ func (dao *DocumentDAO) CreateDocument(owner uuid.UUID, document *model.Document
 	}
 
 	return nil
+}
+
+func (dao *DocumentDAO) ListDocuments(filter *model.ListDocumentsFilter) (*DocumentPage, error) {
+
+	// 	var documents DocumentPage
+
+	//	dao.cm.DB.Exec(context.Background(),
+	//		`SELECT ownership.document_id, documents.title,
+	//			documents.s3key, documents.date, documents.type,
+	//			author, role FROM ownership
+	//		JOIN documents ON ownership.document_id = documents.id
+	//		JOIN authorship ON ownership.document_id = authorship.document_id
+	//		WHERE (user_id = $1 AND )`
+	//
+	// )
+	return nil, nil
 }

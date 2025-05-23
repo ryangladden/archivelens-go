@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ryangladden/archivelens-go/request"
 	"github.com/ryangladden/archivelens-go/service"
+	"github.com/ryangladden/archivelens-go/utils"
 )
 
 type DocumentHandler struct {
@@ -50,4 +51,22 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 	c.JSON(200, gin.H{"form": request})
 	// c.JSON(200, gin.H{"title": file.Filename})
 
+}
+
+func (h *DocumentHandler) ListDocuments(c *gin.Context) {
+	var request request.ListDocumentsRequest
+	err := c.ShouldBind(&request)
+	if err != nil {
+		log.Error().Err(err).Msg("Invalid query for listing documents")
+		c.AbortWithStatus(400)
+		return
+	}
+
+	request.UserID = utils.GetUserIDFromContext(c)
+	documents, err := h.documentService.ListDocuments(request)
+	if err != nil {
+		c.AbortWithStatus(500)
+		return
+	}
+	c.JSON(200, documents)
 }

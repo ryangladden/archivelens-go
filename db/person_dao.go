@@ -93,7 +93,7 @@ func (dao *PersonDAO) ListPersons(filter *model.ListPersonsFilter) (*PersonPage,
 
 	var personPage PersonPage
 	var totalPersons int
-	conditions := generateAndConditions(filter)
+	conditions := dao.generateAndConditions(filter)
 	countQuery := fmt.Sprintf(`SELECT COUNT(*)
 		FROM persons
 		JOIN users_persons ON persons.id = users_persons.person_id
@@ -129,19 +129,19 @@ func readPersonListRows(rows pgx.Rows) []model.Person {
 		var person model.Person
 		var s3key pgtype.Text
 		if err := rows.Scan(&person.ID, &person.FirstName, &person.LastName, &person.Birth, &person.Death, &person.Summary, &s3key, &person.Role); err != nil {
-			log.Error().Err(err).Msgf("Failed to scan row")
+			log.Error().Err(err).Msgf("Failed to scan row in person list")
 			continue
 		}
 		if s3key.Status != pgtype.Null {
 			person.S3Key = &s3key.String
 		}
-		log.Debug().Msgf("%s %s %s %s %s %s", person.FirstName, person.LastName, person.Birth, person.Death, person.ID, person)
+		log.Debug().Msgf("%s %s %s %s %s", person.FirstName, person.LastName, person.Birth, person.Death, person.ID)
 		persons = append(persons, person)
 	}
 	return persons
 }
 
-func generateAndConditions(filter *model.ListPersonsFilter) string {
+func (dao *PersonDAO) generateAndConditions(filter *model.ListPersonsFilter) string {
 	var conditions strings.Builder
 	if filter.BirthMax != nil {
 		conditions.WriteString(" AND birth <= " + filter.BirthMax.String())

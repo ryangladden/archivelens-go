@@ -29,6 +29,9 @@ func createDocumentTable(db *pgx.Conn) {
 		EXCEPTION
 			WHEN duplicate_object THEN null;
 		END $$;`)
+	if err != nil {
+		log.Fatal().Err(err).Msg("DB initialization failed to create document_type enum")
+	}
 
 	_, err = db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS documents (
 		id uuid NOT NULL,
@@ -45,7 +48,6 @@ func createDocumentTable(db *pgx.Conn) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("DB initialization failed to create documents table")
 	}
-
 	createUpdatedAtTrigger(db, "documents")
 }
 
@@ -67,7 +69,6 @@ func createPersonsTable(db *pgx.Conn) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("DB initialization failed to create persons table")
 	}
-
 	createUpdatedAtTrigger(db, "persons")
 }
 
@@ -117,7 +118,6 @@ func createOwnershipTable(db *pgx.Conn) {
 	if err != nil {
 		log.Fatal().Err(err).Msgf("DB initialization failed to create ownership table")
 	}
-
 	createUpdatedAtTrigger(db, "ownership")
 }
 
@@ -186,7 +186,7 @@ func createAuthTable(db *pgx.Conn) {
 		log.Fatal().Err(err).Msgf("DB initialization failed to create auth table")
 	}
 
-	createUpdatedAtTrigger(db, "documents")
+	createUpdatedAtTrigger(db, "auth")
 }
 
 func createUsersPersonsTable(db *pgx.Conn) {
@@ -227,3 +227,11 @@ func createUpdatedAtTrigger(db *pgx.Conn, table string) {
 		log.Fatal().Err(err).Msgf("DB initialization failed to create updated_at trigger for %s table", table)
 	}
 }
+
+// func createIndex(db *pgx.Conn, table string, column string) {
+// 	insert := fmt.Sprintf(`CREATE INDEX IF NOT EXISTS ON %s(%s)`, table, column)
+// 	_, err := db.Exec(context.Background(), insert)
+// 	if err != nil {
+// 		log.Fatal().Err(err).Msgf("DB initialization failed to create index for column '%s' in table '%s'")
+// 	}
+// }

@@ -17,7 +17,7 @@ func parseExcludeRoles(request *[]string) *string {
 		roles := make([]string, 0, len(roleList))
 		for _, role := range roleList {
 			if slices.Contains([]string{"editor", "owner", "viewer"}, role) {
-				formattedRole := fmt.Sprintf("\"%s\"", role)
+				formattedRole := fmt.Sprintf("'%s'", role)
 				roles = append(roles, formattedRole)
 			}
 		}

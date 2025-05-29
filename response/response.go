@@ -41,6 +41,7 @@ type InlinePerson struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
 	PresignedURL *string   `json:"avatar"`
+	Role         *string   `json:"role,omitempty"`
 }
 
 type DocumentResponse struct {
@@ -58,13 +59,15 @@ type DocumentResponse struct {
 }
 
 type InlineDocument struct {
-	ID        uuid.UUID     `json:"id"`
-	Title     string        `json:"title"`
-	Date      *time.Time    `json:"date"`
-	Type      string        `json:"type"`
-	Author    *InlinePerson `json:"author"`
-	Thumbnail string        `json:"thumbnail"`
-	Role      string        `json:"role"`
+	ID        uuid.UUID       `json:"id"`
+	Title     string          `json:"title"`
+	Date      *time.Time      `json:"date"`
+	Type      string          `json:"type"`
+	Author    *InlinePerson   `json:"author"`
+	Thumbnail string          `json:"thumbnail"`
+	Role      string          `json:"role"`
+	Persons   *[]InlinePerson `json:"persons"`
+	Tags      *[]Tag          `json:"tags"`
 }
 
 type ListDocumentsResponse struct {
@@ -73,4 +76,9 @@ type ListDocumentsResponse struct {
 	TotalPages       int              `json:"total_pages"`
 	DocumentsPerPage int              `json:"persons_per_page"`
 	TotalDocuments   int              `json:"total_persons"`
+}
+
+type Tag struct {
+	ID  int    `json:"tag_id"`
+	Tag string `json:"tag"`
 }

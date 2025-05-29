@@ -63,15 +63,15 @@ type GetPersonRequest struct {
 
 type ListDocumentsRequest struct {
 	UserID       uuid.UUID
-	Page         *int         `form:"page"`
-	Limit        *int         `form:"documents_per_page"`
-	SortBy       *string      `form:"sort_by"`
-	DateMin      *time.Time   `form:"date_min" time_format:"2006-01-02" time_utc:"1"`
-	DateMax      *time.Time   `form:"date_max" time_format:"2006-01-02" time_utc:"1"`
-	IncludeTags  *[]string    `form:"tags"`
-	TitleMatch   *string      `form:"title_match"`
-	Authors      *[]uuid.UUID `form:"authors"`
-	ExcludeRoles *[]string    `form:"exclude_roles"`
-	Order        *string      `form:"order"` // ascending or descending
-	ExcludeType  *[]string    `form:"exclude_type"`
+	Page         *int       `form:"page"`
+	Limit        *int       `form:"documents_per_page"`
+	SortBy       *string    `form:"sort_by"`
+	DateMin      *time.Time `form:"date_min" time_format:"2006-01-02" time_utc:"1"`
+	DateMax      *time.Time `form:"date_max" time_format:"2006-01-02" time_utc:"1"`
+	IncludeTags  *[]string  `form:"tags"`
+	TitleMatch   *string    `form:"title_match"`
+	Authors      *[]string  `form:"authors"`
+	ExcludeRoles *[]string  `form:"exclude_roles"`
+	Order        *string    `form:"order"` // ascending or descending
+	ExcludeType  *[]string  `form:"exclude_type"`
 }

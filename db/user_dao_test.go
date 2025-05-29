@@ -22,6 +22,9 @@ func TestMain(m *testing.M) {
 func TestCreateUser(t *testing.T) {
 
 	id, err := uuid.NewV7()
+	if err != nil {
+		t.Fatal("Error generating a UUID. This is likely a problem with your system")
+	}
 
 	// Create a new user
 	user := &model.User{

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -9,7 +11,6 @@ import (
 	// "github.com/ryangladden/archivelens-go/db"
 	"github.com/ryangladden/archivelens-go/model"
 	"github.com/ryangladden/archivelens-go/request"
-	"github.com/ryangladden/archivelens-go/response"
 )
 
 func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRequest) *model.Document {
@@ -19,9 +20,9 @@ func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRe
 		log.Error().Err(err).Msgf("Error generating UUID for document titled \"%s\"", request.Title)
 	}
 
-	path := "documents/" + id.String()
+	s3Key := fmt.Sprintf("documents/%s/document%s", id.String(), filepath.Ext(request.File.Filename))
 
-	s3Key := s.storageManager.GenerateObjectKey(request.File.Filename, id, path)
+	// s3Key := s.storageManager.GenerateObjectKey(request.File.Filename, id, path)
 
 	document := model.Document{
 		Title:    request.Title,
@@ -29,7 +30,7 @@ func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRe
 		Date:     request.Date,
 		Type:     request.Type,
 		ID:       id,
-		S3Key:    *s3Key,
+		S3Key:    s3Key,
 	}
 	return &document
 }
@@ -64,7 +65,7 @@ func generateAuthorshipArray(documentId string, request request.CreateDocumentRe
 }
 
 func (s *DocumentService) generateListDocumentsFilter(request request.ListDocumentsRequest) *model.ListDocumentsFilter {
-	titleMatch := ""
+	var titleMatch string
 	if request.TitleMatch != nil {
 		titleMatch = strings.ToLower(*request.TitleMatch)
 	}
@@ -92,29 +93,33 @@ func (s *DocumentService) generateListDocumentsFilter(request request.ListDocume
 	return &filter
 }
 
-func (s *DocumentService) generateInlineDocument(documents []model.Document) []response.InlineDocument {
-	var inlineDocuments []response.InlineDocument
-	for _, document := range documents {
-		inlineDocuments = append(inlineDocuments, response.InlineDocument{
-			Title:  document.Title,
-			Date:   document.Date,
-			Author: s.generateInlinePerson(document.Author),
-			Type:   document.Type,
-		})
-	}
-	return inlineDocuments
-}
+// func (s *DocumentService) generateInlineDocument(documents []model.Document) []response.InlineDocument {
+// 	var inlineDocuments []response.InlineDocument
+// 	for _, document := range documents {
+// 		inlineDocuments = append(inlineDocuments, response.InlineDocument{
+// 			Title:  document.Title,
+// 			Date:   document.Date,
+// 			Author: s.generateInlinePerson(document.Author),
+// 			Type:   document.Type,
+// 		})
+// 	}
+// 	return inlineDocuments
+// }
 
 // func (s *DocumentService) generateDocumentListResponse(db.DocumentPage)
 
-func parseUUIDList(request *[]uuid.UUID) *string {
+func parseUUIDList(request *[]string) *string {
 	if request != nil {
 		var ids []string
 		for _, id := range *request {
-			ids = append(ids, id.String())
+			if err := uuid.Validate(id); err == nil {
+				ids = append(ids, fmt.Sprintf("'%s'", id))
+			}
 		}
-		list := strings.Join(ids, ", ")
-		return &list
+		if len(ids) != 0 {
+			list := strings.Join(ids, ", ")
+			return &list
+		}
 	}
 	return nil
 }
@@ -127,13 +132,13 @@ func parseTags(request *[]string) *string {
 	return nil
 }
 
-func (s *DocumentService) generateInlinePerson(person *model.Person) *response.InlinePerson {
-	if person != nil {
-		return &response.InlinePerson{
-			ID:           person.ID,
-			Name:         person.FirstName + person.LastName,
-			PresignedURL: s.storageManager.GeneratePresignedURL(person.S3Key),
-		}
-	}
-	return nil
-}
+// func (s *DocumentService) generateInlinePerson(person *model.Person) *response.InlinePerson {
+// 	if person != nil {
+// 		return &response.InlinePerson{
+// 			ID:           person.ID,
+// 			Name:         person.FirstName + person.LastName,
+// 			PresignedURL: s.storageManager.GeneratePresignedURL(person.S3Key),
+// 		}
+// 	}
+// 	return nil
+// }

@@ -1,7 +1,9 @@
 package service
 
 import (
+	"fmt"
 	"math"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -87,7 +89,8 @@ func (s *PersonService) generatePersonModel(request *request.CreatePersonRequest
 
 	person.ID = id
 	if request.Avatar != nil {
-		person.S3Key = s.storageManager.GenerateObjectKey(request.Avatar.Filename, id, "persons")
+		key := fmt.Sprintf("persons/%s/original%s", id.String(), strings.ToLower(filepath.Ext(request.Avatar.Filename)))
+		person.S3Key = &key
 	} else {
 		person.S3Key = nil
 	}

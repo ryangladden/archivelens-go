@@ -44,47 +44,11 @@ func (s *DocumentService) ListDocuments(request request.ListDocumentsRequest) (*
 	listResponse := s.generateListDocumentsResponse(documentPage)
 	listResponse.DocumentsPerPage = filter.Limit
 	listResponse.TotalDocuments = documentPage.TotalDocuments
-	listResponse.PageNumber = filter.Page
+	listResponse.PageNumber = filter.Page + 1
 	listResponse.TotalPages = int(math.Ceil(float64(documentPage.TotalDocuments) / float64(filter.Limit)))
 	return listResponse, nil
 }
 
-func (s *DocumentService) generateListDocumentsResponse(page *db.DocumentPage) *response.ListDocumentsResponse {
-	var listResponse response.ListDocumentsResponse
-	for _, document := range page.Documents {
-		inlineDocument := response.InlineDocument{
-			ID:    document.Document.ID,
-			Title: document.Document.Title,
-			Date:  document.Document.Date,
-			Author: &response.InlinePerson{
-				ID:   document.DocumentMetadata.Author.ID,
-				Name: document.DocumentMetadata.Author.Name,
-			},
-			Role: document.Document.Role,
-		}
-		inlineDocument.Persons, inlineDocument.Tags = s.parseSearchMetadata(document)
-		listResponse.Documents = append(listResponse.Documents, inlineDocument)
-	}
-	return &listResponse
-}
-
-func (s *DocumentService) parseSearchMetadata(document db.InlineDocument) (*[]response.InlinePerson, *[]response.Tag) {
-	var persons []response.InlinePerson
-	for _, personData := range document.DocumentMetadata.Persons {
-		person := response.InlinePerson{
-			ID:   personData.ID,
-			Name: personData.Name,
-			Role: &personData.Role,
-		}
-		persons = append(persons, person)
-	}
-	var tags []response.Tag
-	for _, tagData := range document.DocumentMetadata.Tags {
-		tag := response.Tag{
-			ID:  tagData.ID,
-			Tag: tagData.Tag,
-		}
-		tags = append(tags, tag)
-	}
-	return &persons, &tags
-}
+// func (s *DocumentService) GetDocument(request request.GetDocumentRequest) {
+// 	s.documentDao.GetDocument(request.UserID, request.DocumentID)
+// }

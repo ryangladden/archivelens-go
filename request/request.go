@@ -61,6 +61,11 @@ type GetPersonRequest struct {
 	PersonID uuid.UUID
 }
 
+type GetDocumentRequest struct {
+	UserID     uuid.UUID
+	DocumentID uuid.UUID
+}
+
 type ListDocumentsRequest struct {
 	UserID       uuid.UUID
 	Page         *int       `form:"page"`

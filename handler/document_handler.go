@@ -23,7 +23,17 @@ func NewDocumentHandler(documentService *service.DocumentService) *DocumentHandl
 }
 
 func (h *DocumentHandler) GetDocument(c *gin.Context) {
-
+	// request := request.GetDocumentRequest{
+	// 	UserID: getUserFromContext(c).ID,
+	// }
+	// var err error
+	// request.DocumentID, err = utils.GetParamsAsUUID(c, "id")
+	// if err != nil {
+	// 	log.Error().Err(err).Msgf("Failed to get document by id")
+	// 	c.AbortWithStatus(400)
+	// 	return
+	// }
+	// document := h.documentService.GetDocument(request)
 }
 
 func (h *DocumentHandler) CreateDocument(c *gin.Context) {

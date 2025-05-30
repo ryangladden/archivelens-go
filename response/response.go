@@ -55,7 +55,8 @@ type DocumentResponse struct {
 	Mentions     *[]InlinePerson `json:"mentions"`
 	Recipient    *InlinePerson   `json:"recipient"`
 	Role         string          `json:"role"`
-	PresignedUrl string          `json:"src"`
+	PresignedUrl string          `json:"thumbnail"`
+	Tags         *[]Tag          `json:"tags"`
 }
 
 type InlineDocument struct {
@@ -74,8 +75,8 @@ type ListDocumentsResponse struct {
 	Documents        []InlineDocument `json:"documents"`
 	PageNumber       int              `json:"page"`
 	TotalPages       int              `json:"total_pages"`
-	DocumentsPerPage int              `json:"persons_per_page"`
-	TotalDocuments   int              `json:"total_persons"`
+	DocumentsPerPage int              `json:"documents_per_page"`
+	TotalDocuments   int              `json:"total_documents"`
 }
 
 type Tag struct {

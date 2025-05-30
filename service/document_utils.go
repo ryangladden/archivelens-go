@@ -8,9 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	// "github.com/ryangladden/archivelens-go/db"
+	"github.com/ryangladden/archivelens-go/db"
 	"github.com/ryangladden/archivelens-go/model"
 	"github.com/ryangladden/archivelens-go/request"
+	"github.com/ryangladden/archivelens-go/response"
 )
 
 func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRequest) *model.Document {
@@ -65,13 +66,9 @@ func generateAuthorshipArray(documentId string, request request.CreateDocumentRe
 }
 
 func (s *DocumentService) generateListDocumentsFilter(request request.ListDocumentsRequest) *model.ListDocumentsFilter {
-	var titleMatch string
-	if request.TitleMatch != nil {
-		titleMatch = strings.ToLower(*request.TitleMatch)
-	}
 	filter := model.ListDocumentsFilter{
 		UserID:       request.UserID,
-		TitleMatch:   &titleMatch,
+		TitleMatch:   request.TitleMatch,
 		DateMin:      request.DateMin,
 		DateMax:      request.DateMax,
 		ExcludeRoles: parseExcludeRoles(request.ExcludeRoles),
@@ -142,3 +139,43 @@ func parseTags(request *[]string) *string {
 // 	}
 // 	return nil
 // }
+
+func (s *DocumentService) generateListDocumentsResponse(page *db.DocumentPage) *response.ListDocumentsResponse {
+	var listResponse response.ListDocumentsResponse
+	for _, document := range page.Documents {
+		inlineDocument := response.InlineDocument{
+			ID:    document.Document.ID,
+			Title: document.Document.Title,
+			Date:  document.Document.Date,
+			Author: &response.InlinePerson{
+				ID:   document.DocumentMetadata.Author.ID,
+				Name: document.DocumentMetadata.Author.Name,
+			},
+			Role: document.Document.Role,
+		}
+		inlineDocument.Persons, inlineDocument.Tags = s.parseSearchMetadata(document)
+		listResponse.Documents = append(listResponse.Documents, inlineDocument)
+	}
+	return &listResponse
+}
+
+func (s *DocumentService) parseSearchMetadata(document db.InlineDocument) (*[]response.InlinePerson, *[]response.Tag) {
+	var persons []response.InlinePerson
+	for _, personData := range document.DocumentMetadata.Persons {
+		person := response.InlinePerson{
+			ID:   personData.ID,
+			Name: personData.Name,
+			Role: &personData.Role,
+		}
+		persons = append(persons, person)
+	}
+	var tags []response.Tag
+	for _, tagData := range document.DocumentMetadata.Tags {
+		tag := response.Tag{
+			ID:  tagData.ID,
+			Tag: tagData.Tag,
+		}
+		tags = append(tags, tag)
+	}
+	return &persons, &tags
+}

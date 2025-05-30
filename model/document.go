@@ -18,4 +18,10 @@ type Document struct {
 	Mentions  *[]Person
 	Recipient *Person
 	Role      string
+	Tags      *[]Tag
+}
+
+type Tag struct {
+	ID  int
+	Tag string
 }

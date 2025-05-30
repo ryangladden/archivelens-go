@@ -138,9 +138,30 @@ func (dao *DocumentDAO) ListDocuments(filter *model.ListDocumentsFilter) (*Docum
 		return nil, errs.ErrDB
 	}
 	page.Documents = readDocumentListRows(rows)
-	page.TotalDocuments = 1
 	return &page, nil
 }
+
+// func (dao *DocumentDAO) GetDocument(userID uuid.UUID, documentID uuid.UUID) (*model.Document, error) {
+// 	var document model.Document
+
+// 	err := dao.cm.DB.QueryRow(context.Background(),
+// 		`WITH users_documents AS (
+//    			SELECT document_id AS id, role
+//    			FROM ownership
+//    			WHERE user_id = $1
+//       			UNION
+//    			SELECT a.document_id AS id, up.role
+//    			FROM users_persons up
+//    			JOIN authorship a ON a.person_id = up.person_id
+//    			WHERE up.user_id = $1
+//   		)
+// 		SELECT d.id, d.title, d.date, d.location, d.type, d.s3_key, MIN(ud.role) AS permissions
+// 		FROM users_documents ud
+// 		JOIN documents d ON ud.id = d.id
+// 		WHERE ud.id = '0196fd4f-08c0-78d1-a0f6-6f027ee18637'
+// 		GROUP BY d.id`, userID.String(), documentID.String()).Scan(&document.ID, &document.Title, &document.Date, &document.Location, &document.Type, &document.S3Key, &document.Role)
+
+// }
 
 func (dao *DocumentDAO) personsTagsCTE(filter *model.ListDocumentsFilter) (string, string, string, string) {
 	if filter.Authors == nil && filter.IncludeTags == nil {
@@ -199,13 +220,13 @@ func (dao *DocumentDAO) generateQuery(filter *model.ListDocumentsFilter) (string
 		GROUP BY d.id %s
 		)
 		`, personsTags, jsonBuild, joinFilter, groupBy)
-	count := fmt.Sprintf(`SELECT COUNT(*) FROM document_list %s`, "WHERE "+where)
+	count := fmt.Sprintf(`SELECT COUNT(*) FROM document_list dl %s`, where)
 	query := fmt.Sprintf(`
 	SELECT dl.id, dl.title, dl.date, dl.type, dl.metadata, dl.permissions, p.id AS author_id, CONCAT(p.first_name, ' ', p.last_name) AS author_name
     FROM document_list dl -- order by, asc or desc
-    LEFT JOIN authorship a ON dl.id = a.document_id
+    LEFT JOIN authorship a ON dl.id = a.document_id AND a.role = 'author'
     LEFT JOIN persons p ON p.id = a.person_id
-    WHERE a.role = 'author' %s
+    %s
 	ORDER BY %s %s -- order by, asc or desc
 	LIMIT $2 OFFSET $3`,
 		where, filter.SortBy, filter.Order)
@@ -215,24 +236,24 @@ func (dao *DocumentDAO) generateQuery(filter *model.ListDocumentsFilter) (string
 func (dao *DocumentDAO) generateWhere(filter *model.ListDocumentsFilter) string {
 	var conditions []string
 	if filter.ExcludeRoles != nil {
-		conditions = append(conditions, fmt.Sprintf("permissions NOT IN (%s)", *filter.ExcludeRoles))
+		conditions = append(conditions, fmt.Sprintf("dl.permissions NOT IN (%s)", *filter.ExcludeRoles))
 	}
 	if filter.DateMax != nil {
-		conditions = append(conditions, fmt.Sprintf("date <= %s", *filter.DateMax))
+		conditions = append(conditions, fmt.Sprintf("dl.date <= %s", *filter.DateMax))
 	}
 	if filter.DateMin != nil {
-		conditions = append(conditions, fmt.Sprintf("date >= %s", *filter.DateMin))
+		conditions = append(conditions, fmt.Sprintf("dl.date >= %s", *filter.DateMin))
 	}
 	if filter.ExcludeType != nil {
-		conditions = append(conditions, fmt.Sprintf("type NOT IN (%s)", *filter.ExcludeType))
+		conditions = append(conditions, fmt.Sprintf("dl.type NOT IN (%s)", *filter.ExcludeType))
 	}
 	if filter.TitleMatch != nil {
 		log.Debug().Msgf("Title match: %s", *filter.TitleMatch)
-		conditions = append(conditions, fmt.Sprintf("title IS LIKE '%%%s%%'", *filter.TitleMatch))
+		conditions = append(conditions, fmt.Sprintf("dl.title ILIKE '%%%s%%'", *filter.TitleMatch))
 	}
 	where := strings.Join(conditions, " OR ")
 	if where != "" {
-		return " AND " + where
+		return "WHERE " + where
 	}
 	return ""
 }

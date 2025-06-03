@@ -159,6 +159,7 @@ func (s *DocumentService) generateListDocumentsResponse(page *db.DocumentPage) *
 			ID:    document.Document.ID,
 			Title: document.Document.Title,
 			Date:  document.Document.Date,
+			Type:  document.Document.Type,
 			Author: &response.InlinePerson{
 				ID:        document.DocumentMetadata.Author.ID,
 				FirstName: document.DocumentMetadata.Author.FirstName,

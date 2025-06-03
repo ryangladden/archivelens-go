@@ -49,6 +49,25 @@ func (s *DocumentService) ListDocuments(request request.ListDocumentsRequest) (*
 	return listResponse, nil
 }
 
-// func (s *DocumentService) GetDocument(request request.GetDocumentRequest) {
-// 	s.documentDao.GetDocument(request.UserID, request.DocumentID)
-// }
+func (s *DocumentService) GetDocument(request request.GetDocumentRequest) (*response.DocumentResponse, error) {
+
+	document, err := s.documentDao.GetDocument(request.UserID, request.DocumentID)
+	if err != nil {
+		return nil, err
+	}
+	response := response.DocumentResponse{
+		ID:           document.ID,
+		Title:        document.Title,
+		Type:         document.Type,
+		Date:         document.Date,
+		Location:     document.Location,
+		Author:       s.generateInlinePerson(document.Author),
+		Coauthors:    s.generateInlinePersonList(document.Coauthors),
+		Mentions:     s.generateInlinePersonList(document.Mentions),
+		Recipient:    s.generateInlinePerson(document.Recipient),
+		Role:         document.Role,
+		PresignedUrl: *s.storageManager.GeneratePresignedURL(&document.S3Key),
+		Tags:         document.Tags,
+	}
+	return &response, nil
+}

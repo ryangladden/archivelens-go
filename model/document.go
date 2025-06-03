@@ -22,6 +22,6 @@ type Document struct {
 }
 
 type Tag struct {
-	ID  int
-	Tag string
+	ID  int    `json:"id"`
+	Tag string `json:"tag"`
 }

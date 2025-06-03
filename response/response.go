@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/ryangladden/archivelens-go/model"
 )
 
 type LoginResponse struct {
@@ -39,7 +40,8 @@ type ListPersonsResponse struct {
 
 type InlinePerson struct {
 	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"name"`
+	FirstName    *string   `json:"first_name"`
+	LastName     *string   `json:"last_name"`
 	PresignedURL *string   `json:"avatar"`
 	Role         *string   `json:"role,omitempty"`
 }
@@ -55,8 +57,8 @@ type DocumentResponse struct {
 	Mentions     *[]InlinePerson `json:"mentions"`
 	Recipient    *InlinePerson   `json:"recipient"`
 	Role         string          `json:"role"`
-	PresignedUrl string          `json:"thumbnail"`
-	Tags         *[]Tag          `json:"tags"`
+	PresignedUrl string          `json:"url"`
+	Tags         *[]model.Tag    `json:"tags"`
 }
 
 type InlineDocument struct {

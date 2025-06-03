@@ -31,6 +31,7 @@ func (h *AuthHandler) CreateAuth(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "invalid request body"})
 		return
 	}
+	log.Debug().Msgf("User with email %s attempting login", loginRequest.Email)
 
 	authToken, user, err := h.authService.CreateAuth(loginRequest)
 

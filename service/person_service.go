@@ -75,8 +75,8 @@ func (s *PersonService) GetPerson(request request.GetPersonRequest) (*response.P
 
 func (s *PersonService) generatePersonModel(request *request.CreatePersonRequest) (*model.Person, error) {
 	person := model.Person{
-		FirstName: request.FirstName,
-		LastName:  request.LastName,
+		FirstName: &request.FirstName,
+		LastName:  &request.LastName,
 		Birth:     request.Birth,
 		Death:     request.Death,
 		Summary:   request.Summary,
@@ -101,8 +101,8 @@ func (s *PersonService) generatePersonModel(request *request.CreatePersonRequest
 func (s *PersonService) generatePersonResponse(person model.Person) *response.PersonResponse {
 	response := response.PersonResponse{
 		ID:           person.ID,
-		FirstName:    person.FirstName,
-		LastName:     person.LastName,
+		FirstName:    *person.FirstName,
+		LastName:     *person.LastName,
 		Birth:        person.Birth,
 		Death:        person.Death,
 		Summary:      person.Summary,

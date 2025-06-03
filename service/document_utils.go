@@ -129,16 +129,28 @@ func parseTags(request *[]string) *string {
 	return nil
 }
 
-// func (s *DocumentService) generateInlinePerson(person *model.Person) *response.InlinePerson {
-// 	if person != nil {
-// 		return &response.InlinePerson{
-// 			ID:           person.ID,
-// 			Name:         person.FirstName + person.LastName,
-// 			PresignedURL: s.storageManager.GeneratePresignedURL(person.S3Key),
-// 		}
-// 	}
-// 	return nil
-// }
+func (s *DocumentService) generateInlinePerson(person *model.Person) *response.InlinePerson {
+	if person != nil {
+		return &response.InlinePerson{
+			ID:           person.ID,
+			FirstName:    person.FirstName,
+			LastName:     person.LastName,
+			PresignedURL: s.storageManager.GeneratePresignedURL(person.S3Key),
+		}
+	}
+	return nil
+}
+
+func (s *DocumentService) generateInlinePersonList(persons *[]model.Person) *[]response.InlinePerson {
+	if persons != nil {
+		var inlinePersons []response.InlinePerson
+		for _, person := range *persons {
+			inlinePersons = append(inlinePersons, *s.generateInlinePerson(&person))
+		}
+		return &inlinePersons
+	}
+	return nil
+}
 
 func (s *DocumentService) generateListDocumentsResponse(page *db.DocumentPage) *response.ListDocumentsResponse {
 	var listResponse response.ListDocumentsResponse
@@ -148,8 +160,9 @@ func (s *DocumentService) generateListDocumentsResponse(page *db.DocumentPage) *
 			Title: document.Document.Title,
 			Date:  document.Document.Date,
 			Author: &response.InlinePerson{
-				ID:   document.DocumentMetadata.Author.ID,
-				Name: document.DocumentMetadata.Author.Name,
+				ID:        document.DocumentMetadata.Author.ID,
+				FirstName: document.DocumentMetadata.Author.FirstName,
+				LastName:  document.DocumentMetadata.Author.LastName,
 			},
 			Role: document.Document.Role,
 		}
@@ -163,9 +176,10 @@ func (s *DocumentService) parseSearchMetadata(document db.InlineDocument) (*[]re
 	var persons []response.InlinePerson
 	for _, personData := range document.DocumentMetadata.Persons {
 		person := response.InlinePerson{
-			ID:   personData.ID,
-			Name: personData.Name,
-			Role: &personData.Role,
+			ID:        personData.ID,
+			FirstName: personData.FirstName,
+			LastName:  personData.LastName,
+			Role:      personData.Role,
 		}
 		persons = append(persons, person)
 	}

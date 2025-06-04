@@ -33,17 +33,16 @@ type Server struct {
 	connectionManager *db.ConnectionManager
 	storageManager    *storage.StorageManager
 
-	userHandler     *handler.UserHandler
+	// userHandler     *handler.UserHandler
 	authHandler     *handler.AuthHandler
 	documentHandler *handler.DocumentHandler
 	personHandler   *handler.PersonHandler
 
-	userService     *service.UserService
 	authService     *service.AuthService
 	documentService *service.DocumentService
 	personService   *service.PersonService
 
-	userDao     *db.UserDAO
+	// userDao     *db.UserDAO
 	authDao     *db.AuthDAO
 	documentDao *db.DocumentDAO
 	personDao   *db.PersonDAO
@@ -57,12 +56,12 @@ func NewServer() *Server {
 	connectionManager := db.NewConnectionManager(postgresHost, postgresPort, postgresUsername, postgresPassword, postgresDb)
 	storageManager := storage.NewStorageManager(s3Endpoint, s3AccessKeyId, s3SecretAccessKey, s3BucketName, s3Location)
 
-	userDao := db.NewUserDAO(connectionManager)
-	userService := service.NewUserService(userDao)
-	userHandler := handler.NewUserHandler(userService)
+	// userDao := db.NewUserDAO(connectionManager)
+	// userService := service.NewUserService(userDao)
+	// userHandler := handler.NewUserHandler(userService)
 
 	authDao := db.NewAuthDAO(connectionManager)
-	authService := service.NewAuthService(authDao, userDao)
+	authService := service.NewAuthService(authDao)
 	authHandler := handler.NewAuthHandler(authService)
 
 	documentDao := db.NewDocumentDAO(connectionManager)
@@ -73,23 +72,23 @@ func NewServer() *Server {
 	personService := service.NewPersonService(personDao, storageManager)
 	personHandler := handler.NewPersonHandler(personService)
 
-	router := routes.NewRouter(userHandler, authHandler, documentHandler, personHandler)
+	router := routes.NewRouter(authHandler, documentHandler, personHandler)
 
 	return &Server{
 		connectionManager: connectionManager,
 		storageManager:    storageManager,
 
-		userHandler:     userHandler,
+		// userHandler:     userHandler,
 		authHandler:     authHandler,
 		documentHandler: documentHandler,
 		personHandler:   personHandler,
 
-		userService:     userService,
+		// userService:     userService,
 		authService:     authService,
 		documentService: documentService,
 		personService:   personService,
 
-		userDao:     userDao,
+		// userDao:     userDao,
 		authDao:     authDao,
 		documentDao: documentDao,
 		personDao:   personDao,

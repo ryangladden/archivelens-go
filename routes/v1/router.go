@@ -7,18 +7,18 @@ import (
 )
 
 type Router struct {
-	userHandler     *handler.UserHandler
+	// userHandler     *handler.UserHandler
 	authHandler     *handler.AuthHandler
 	documentHandler *handler.DocumentHandler
 	personHandler   *handler.PersonHandler
 	routes          *gin.Engine
 }
 
-func NewRouter(userHandler *handler.UserHandler, authHandler *handler.AuthHandler, documentHandler *handler.DocumentHandler, personHandler *handler.PersonHandler) *Router {
+func NewRouter(authHandler *handler.AuthHandler, documentHandler *handler.DocumentHandler, personHandler *handler.PersonHandler) *Router {
 	r := gin.Default()
 
 	router := &Router{
-		userHandler:     userHandler,
+		// userHandler:     userHandler,
 		authHandler:     authHandler,
 		documentHandler: documentHandler,
 		personHandler:   personHandler,
@@ -40,7 +40,7 @@ func (r *Router) registerRoutes() {
 	v1 := api.Group("/v1")
 	users := v1.Group("/users")
 	{
-		users.POST("", r.userHandler.CreateUser)
+		users.POST("", r.authHandler.CreateUser)
 		// users.GET("me", r.authHandler.AuthenticateMiddleware(), r.userHandler.GetMe)
 		// 	users.PUT("", CreateUser)
 		// 	users.PATCH("", UpdateUser)

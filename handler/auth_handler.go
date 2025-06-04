@@ -24,6 +24,32 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 	}
 }
 
+func (h *AuthHandler) CreateUser(c *gin.Context) {
+	var createUserRequest request.CreateUserRequest
+	log.Info().Msg("POST /api/v1/users")
+	if err := c.BindJSON(&createUserRequest); err != nil {
+		log.Error().Err(err).Msg("Invalid request body for creating user")
+		c.JSON(400, gin.H{"error": "invalid request body"})
+		return
+	}
+	authToken, user, err := h.authService.CreateUser(&createUserRequest)
+	if err != nil {
+		if err == errs.ErrConflict {
+			c.JSON(409, gin.H{"error": "user with this email already exists"})
+			return
+		} else {
+			c.JSON(500, gin.H{"error": "internal server error"})
+			return
+		}
+	}
+	login := request.LoginRequest{Email: user.Email, Password: createUserRequest.Password}
+	h.authService.CreateAuth(login)
+
+	http.SetCookie(c.Writer, createCookie(authToken))
+
+	c.JSON(201, user)
+}
+
 func (h *AuthHandler) CreateAuth(c *gin.Context) {
 	var loginRequest request.LoginRequest
 	if err := c.BindJSON(&loginRequest); err != nil {

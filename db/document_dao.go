@@ -350,7 +350,7 @@ func readTagsRows(rows pgx.Rows) *[]model.Tag {
 	var tags []model.Tag
 	for rows.Next() {
 		var tag model.Tag
-		if err := rows.Scan(&tag.ID, &tag.Tag); err != nil {
+		if err := rows.Scan(&tag.Tag, &tag.ID); err != nil {
 			log.Error().Err(err).Msg("Failed to scan row in tag list")
 			continue
 		}

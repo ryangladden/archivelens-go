@@ -1,44 +1,31 @@
 package storage
 
-import (
-	"context"
-	"fmt"
+// import (
+// 	"context"
+// 	"fmt"
+// 	"net/url"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
-)
+// 	"github.com/rs/zerolog/log"
+// 	"github.com/aws/aws-sdk-go-v2/config"
+// 	"github.com/aws/aws-sdk-go-v2/service/s3"
+// 	"github.com/aws/smithy-go/endpoints"
+// )
 
-func CreateBucket() {
-	ctx := context.Background()
-	endpoint := "localhost:9000"
-	accessKeyID := "9tAeZxTVqaHMWAz0nbAh"
-	secretAccessKey := "nFLdSPVcsrdeGxtSFmxNea8V5XtPPfk32JzeiOIQ"
-	useSSL := false
+// type S3Manager struct {
+// 	bucketName string
+// 	service *s3.S3
+// 	config *aws.Config
+// }
 
-	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure: useSSL,
-	})
+// func NewS3Manager(s3Endpoint string, s3BucketName string, s3Location string) {
 
-	if err != nil {
-		fmt.Printf("Error: %v", err)
-	}
-
-	bucketName := "archive-lens"
-	location := "us-east-1"
-
-	err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{
-		Region: location,
-	})
-
-	if err != nil {
-		exists, errBucketExists := minioClient.BucketExists(ctx, bucketName)
-		if errBucketExists == nil && exists {
-			fmt.Println("bucket exists dude")
-		} else {
-			fmt.Printf("Error: %v", err)
-		}
-	} else {
-		fmt.Println("Bucket created dawg")
-	}
-}
+// 	endpointURL, err := url.Parse(s3Endpoint)
+// 	if err != nil {
+// 		log.Fatal().Err(err).Msgf("Failed to parse S3 endpoint. AWS_ENDPOINT=%s", s3Endpoint)
+// 	}
+// 	disableSSL := true
+// 	config.NewEnvConfig()
+// 	session := session.Must(session.NewSession())
+// 	service := s3.New(sess)
+// 	ctx := context.Background()
+// }

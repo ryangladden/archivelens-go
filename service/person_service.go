@@ -1,9 +1,7 @@
 package service
 
 import (
-	"fmt"
 	"math"
-	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -38,7 +36,7 @@ func (s *PersonService) CreatePerson(request *request.CreatePersonRequest) (uuid
 		return uuid.Nil, errs.ErrDB
 	}
 	if personModel.S3Key != nil {
-		if err = s.storageManager.UploadFile(request.Avatar, personModel.S3Key); err != nil {
+		if err = s.storageManager.UploadFile(request.Avatar, *personModel.S3Key); err != nil {
 			return uuid.Nil, errs.ErrStorage
 		}
 	}
@@ -89,8 +87,9 @@ func (s *PersonService) generatePersonModel(request *request.CreatePersonRequest
 
 	person.ID = id
 	if request.Avatar != nil {
-		key := fmt.Sprintf("persons/%s/original%s", id.String(), strings.ToLower(filepath.Ext(request.Avatar.Filename)))
-		person.S3Key = &key
+		key := storage.GenerateObjectKey("persons", id, "avatar", request.Avatar.Filename)
+		// key := fmt.Sprintf("persons/%s/original%s", id.String(), strings.ToLower(filepath.Ext(request.Avatar.Filename)))
+		person.S3Key = key
 	} else {
 		person.S3Key = nil
 	}

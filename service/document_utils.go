@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -12,6 +11,7 @@ import (
 	"github.com/ryangladden/archivelens-go/model"
 	"github.com/ryangladden/archivelens-go/request"
 	"github.com/ryangladden/archivelens-go/response"
+	"github.com/ryangladden/archivelens-go/storage"
 )
 
 func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRequest) *model.Document {
@@ -21,7 +21,8 @@ func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRe
 		log.Error().Err(err).Msgf("Error generating UUID for document titled \"%s\"", request.Title)
 	}
 
-	s3Key := fmt.Sprintf("documents/%s/document%s", id.String(), filepath.Ext(request.File.Filename))
+	// s3Key := fmt.Sprintf("documents/%s/document%s", id.String(), filepath.Ext(request.File.Filename))
+	s3Key := storage.GenerateObjectKey("documents", id, request.File.Filename, "original")
 
 	// s3Key := s.storageManager.GenerateObjectKey(request.File.Filename, id, path)
 
@@ -31,7 +32,7 @@ func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRe
 		Date:     request.Date,
 		Type:     request.Type,
 		ID:       id,
-		S3Key:    s3Key,
+		S3Key:    *s3Key,
 	}
 	return &document
 }

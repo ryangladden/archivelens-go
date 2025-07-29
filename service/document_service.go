@@ -23,7 +23,7 @@ func NewDocumentService(documentDao *db.DocumentDAO, storageManager *storage.Sto
 
 func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) (string, error) {
 	document := s.generateDocumentModel(request)
-	err := s.storageManager.UploadFile(request.File, &document.S3Key)
+	err := s.storageManager.UploadFile(request.File, document.S3Key)
 	if err != nil {
 		return "", err
 	}

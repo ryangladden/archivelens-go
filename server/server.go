@@ -22,11 +22,9 @@ var (
 	postgresPassword string
 	postgresDb       string
 
-	s3Endpoint        string
-	s3AccessKeyId     string
-	s3SecretAccessKey string
-	s3BucketName      string
-	s3Location        string
+	s3Endpoint   string
+	s3BucketName string
+	s3Location   string
 )
 
 type Server struct {
@@ -54,7 +52,8 @@ func NewServer() *Server {
 	getEnvironmentVariables()
 
 	connectionManager := db.NewConnectionManager(postgresHost, postgresPort, postgresUsername, postgresPassword, postgresDb)
-	storageManager := storage.NewStorageManager(s3Endpoint, s3AccessKeyId, s3SecretAccessKey, s3BucketName, s3Location)
+	// storageManager := storage.NewStorageManager(s3Endpoint, s3AccessKeyId, s3SecretAccessKey, s3BucketName, s3Location)
+	storageManager := storage.NewStorageManager(s3Endpoint, s3BucketName, s3Location)
 
 	// userDao := db.NewUserDAO(connectionManager)
 	// userService := service.NewUserService(userDao)
@@ -112,9 +111,9 @@ func getEnvironmentVariables() {
 	postgresPassword = os.Getenv("POSTGRES_PASSWORD")
 	postgresDb = os.Getenv("POSTGRES_DB")
 
-	s3Endpoint = os.Getenv("S3_ENDPOINT")
-	s3AccessKeyId = os.Getenv("S3_ACCESS_KEY_ID")
-	s3SecretAccessKey = os.Getenv("S3_SECRET_ACCESS_KEY")
-	s3BucketName = os.Getenv("S3_BUCKET_NAME")
-	s3Location = os.Getenv("S3_LOCATION")
+	s3Endpoint = os.Getenv("AWS_ENDPOINT")
+	// s3AccessKeyId = os.Getenv("S3_ACCESS_KEY_ID")
+	// s3SecretAccessKey = os.Getenv("S3_SECRET_ACCESS_KEY")
+	s3BucketName = os.Getenv("AWS_BUCKET_NAME")
+	s3Location = os.Getenv("AWS_REGION")
 }

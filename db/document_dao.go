@@ -71,11 +71,11 @@ func (dao *DocumentDAO) CreateDocument(owner uuid.UUID, document *model.Document
 
 	_, err = tx.Exec(ctx,
 		`INSERT INTO documents
-    	(id, title, location, date, s3_key, type)
+    	(id, title, location, date, original_filename, type)
 		VALUES ($1, $2, $3, $4, $5, $6)`,
 		document.ID.String(), document.Title,
 		document.Location, document.Date,
-		document.S3Key, document.Type)
+		document.OriginalFilename, document.Type)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to insert document into documents table")
 		return err
@@ -152,11 +152,11 @@ func (dao *DocumentDAO) GetDocument(userID uuid.UUID, documentID uuid.UUID) (*mo
    			JOIN authorship a ON a.person_id = up.person_id
    			WHERE up.user_id = $1
   		)
-		SELECT d.id, d.title, d.date, d.location, d.type, d.s3_key, MIN(ud.role) AS permissions
+		SELECT d.id, d.title, d.date, d.location, d.type, MIN(ud.role) AS permissions
 		FROM users_documents ud
 		JOIN documents d ON ud.id = d.id
 		WHERE ud.id = $2
-		GROUP BY d.id`, userID.String(), documentID.String()).Scan(&document.ID, &document.Title, &document.Date, &document.Location, &document.Type, &document.S3Key, &document.Role)
+		GROUP BY d.id`, userID.String(), documentID.String()).Scan(&document.ID, &document.Title, &document.Date, &document.Location, &document.Type, &document.Role)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			log.Info().Msgf("Either document id %s does not exist or user %s does not have permissions to access it", documentID.String(), userID.String())

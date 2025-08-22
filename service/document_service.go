@@ -1,12 +1,16 @@
 package service
 
 import (
+	"fmt"
 	"math"
 
+	"github.com/hibiken/asynq"
+	"github.com/rs/zerolog/log"
 	"github.com/ryangladden/archivelens-go/db"
 	"github.com/ryangladden/archivelens-go/request"
 	"github.com/ryangladden/archivelens-go/response"
 	"github.com/ryangladden/archivelens-go/storage"
+	"github.com/ryangladden/archivelens-go/tasks"
 )
 
 type DocumentService struct {
@@ -23,7 +27,25 @@ func NewDocumentService(documentDao *db.DocumentDAO, storageManager *storage.Sto
 
 func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) (string, error) {
 	document := s.generateDocumentModel(request)
-	err := s.storageManager.UploadFile(request.File, document.S3Key)
+
+	// Move this somewhere else
+	s3key := fmt.Sprintf("/documents/%s/original/%s", document.ID, document.OriginalFilename)
+
+	err := s.storageManager.UploadFile(request.File, s3key)
+
+	// Redis stuff
+	client := asynq.NewClient(asynq.RedisClientOpt{Addr: "localhost:6379"})
+	defer client.Close()
+	task, err := tasks.NewDocumentCreateThumbnailTask(document.ID.String(), document.OriginalFilename)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to create a thumbnail task")
+	}
+	info, err := client.Enqueue(task)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to enqueue a thumbnail task")
+	}
+	log.Info().Msgf("Enqueued thumbnail task for document %s: id=%s queue=%s", document.ID.String(), info.ID, info.Queue)
+
 	if err != nil {
 		return "", err
 	}
@@ -56,18 +78,18 @@ func (s *DocumentService) GetDocument(request request.GetDocumentRequest) (*resp
 		return nil, err
 	}
 	response := response.DocumentResponse{
-		ID:           document.ID,
-		Title:        document.Title,
-		Type:         document.Type,
-		Date:         document.Date,
-		Location:     document.Location,
-		Author:       s.generateInlinePerson(document.Author),
-		Coauthors:    s.generateInlinePersonList(document.Coauthors),
-		Mentions:     s.generateInlinePersonList(document.Mentions),
-		Recipient:    s.generateInlinePerson(document.Recipient),
-		Role:         document.Role,
-		PresignedUrl: *s.storageManager.GeneratePresignedURL(&document.S3Key),
-		Tags:         document.Tags,
+		ID:        document.ID,
+		Title:     document.Title,
+		Type:      document.Type,
+		Date:      document.Date,
+		Location:  document.Location,
+		Author:    s.generateInlinePerson(document.Author),
+		Coauthors: s.generateInlinePersonList(document.Coauthors),
+		Mentions:  s.generateInlinePersonList(document.Mentions),
+		Recipient: s.generateInlinePerson(document.Recipient),
+		Role:      document.Role,
+		// PresignedUrl: *s.storageManager.GeneratePresignedURL(&document.S3Key),
+		Tags: document.Tags,
 	}
 	return &response, nil
 }

@@ -86,7 +86,9 @@ func (s *PersonService) generatePersonModel(request *request.CreatePersonRequest
 	}
 
 	person.ID = id
+	// log.Debug().Msgf("File uploaded is: %s", request.Avatar.Filename)
 	if request.Avatar != nil {
+		log.Debug().Msgf("Uploading file: %s", request.Avatar.Filename)
 		key := storage.GenerateObjectKey("persons", id, "avatar", request.Avatar.Filename)
 		// key := fmt.Sprintf("persons/%s/original%s", id.String(), strings.ToLower(filepath.Ext(request.Avatar.Filename)))
 		person.S3Key = key

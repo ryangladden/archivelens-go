@@ -25,12 +25,22 @@ func createDocumentTable(db *pgx.Conn) {
 
 	_, err := db.Exec(context.Background(), `DO $$ BEGIN
 		CREATE TYPE document_type AS ENUM 
-			('letter', 'journal', 'audio');
+			('letter', 'journal', 'audio', 'email', 'other');
 		EXCEPTION
 			WHEN duplicate_object THEN null;
 		END $$;`)
 	if err != nil {
 		log.Fatal().Err(err).Msg("DB initialization failed to create document_type enum")
+	}
+
+	_, err = db.Exec(context.Background(), `DO $$ BEGIN
+		CREATE TYPE document_status AS ENUM 
+			('pending', 'processing', 'processed', 'failed');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;`)
+	if err != nil {
+		log.Fatal().Err(err).Msg("DB initialization failed to create document_status enum")
 	}
 
 	_, err = db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS documents (
@@ -39,7 +49,9 @@ func createDocumentTable(db *pgx.Conn) {
 		date DATE,
 		location TEXT,
 		type document_type NOT NULL,
-		s3_key TEXT NOT NULL,
+		original_filename TEXT NOT NULL,
+		pages SMALLINT,
+		status document_status NOT NULL DEFAULT 'pending',
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (id)

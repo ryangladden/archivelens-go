@@ -11,7 +11,6 @@ import (
 	"github.com/ryangladden/archivelens-go/model"
 	"github.com/ryangladden/archivelens-go/request"
 	"github.com/ryangladden/archivelens-go/response"
-	"github.com/ryangladden/archivelens-go/storage"
 )
 
 func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRequest) *model.Document {
@@ -20,19 +19,18 @@ func (s *DocumentService) generateDocumentModel(request request.CreateDocumentRe
 	if err != nil {
 		log.Error().Err(err).Msgf("Error generating UUID for document titled \"%s\"", request.Title)
 	}
-
 	// s3Key := fmt.Sprintf("documents/%s/document%s", id.String(), filepath.Ext(request.File.Filename))
-	s3Key := storage.GenerateObjectKey("documents", id, request.File.Filename, "original")
+	// s3Key := storage.GenerateObjectKey("documents", id, request.File.Filename, "original")
 
 	// s3Key := s.storageManager.GenerateObjectKey(request.File.Filename, id, path)
-
+	original := request.File.Filename
 	document := model.Document{
-		Title:    request.Title,
-		Location: request.Location,
-		Date:     request.Date,
-		Type:     request.Type,
-		ID:       id,
-		S3Key:    *s3Key,
+		Title:            request.Title,
+		Location:         request.Location,
+		Date:             request.Date,
+		Type:             request.Type,
+		ID:               id,
+		OriginalFilename: original,
 	}
 	return &document
 }
@@ -63,6 +61,7 @@ func generateAuthorshipArray(documentId string, request request.CreateDocumentRe
 	if request.Recipient != nil {
 		authorships = append(authorships, createAuthorship([]string{*request.Recipient}, documentId, "recipient")...)
 	}
+	log.Debug().Interface("authors", authorships)
 	return authorships
 }
 
@@ -195,3 +194,8 @@ func (s *DocumentService) parseSearchMetadata(document db.InlineDocument) (*[]re
 	}
 	return &persons, &tags
 }
+
+// func (s *DocumentService) getS3Key(uuid uuid.UUID, name string)
+
+// func (s *DocumentService) convertFile(file *multipart.FileHeader) {
+// }

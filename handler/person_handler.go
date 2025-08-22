@@ -35,6 +35,7 @@ func (h *PersonHandler) CreatePerson(c *gin.Context) {
 	if err != nil {
 		if err == http.ErrMissingFile {
 			request.Avatar = nil
+			log.Debug().Msg("Person uploaded with no file")
 		} else {
 			log.Error().Err(err).Msg("Error getting avatar from form")
 			request.Avatar = nil

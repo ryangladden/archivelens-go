@@ -26,8 +26,8 @@ type CreateDocumentRequest struct {
 	Coauthors *[]string             `form:"coauthors"`
 	Mentions  *[]string             `form:"mentions"`
 	Recipient *string               `form:"recipient"`
-	Date      *time.Time            `form:"date"`
-	Location  *string               `form:"location" `
+	Date      *time.Time            `form:"date" time_format:"2006-01-02" time_utc:"1"`
+	Location  *string               `form:"location"`
 	File      *multipart.FileHeader `form:"file" binding:"required"`
 	Owner     uuid.UUID
 }

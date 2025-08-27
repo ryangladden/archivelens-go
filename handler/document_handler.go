@@ -24,6 +24,7 @@ func NewDocumentHandler(documentService *service.DocumentService) *DocumentHandl
 
 func (h *DocumentHandler) GetDocument(c *gin.Context) {
 
+	log.Debug().Msg("Get document called")
 	val := c.MustGet("user")
 	userID, ok := val.(uuid.UUID)
 	if !ok {
@@ -56,6 +57,12 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 	err := c.ShouldBind(&request)
 	if err != nil {
 		log.Error().Err(err).Msg("Error parsing form")
+		c.AbortWithStatus(400)
+		return
+	}
+
+	if !utils.ValidateMIMEType(request.File, []string{"application/pdf", "image/png", "image/jpeg"}) {
+		c.AbortWithStatus(400)
 	}
 
 	val := c.MustGet("user")
@@ -94,4 +101,20 @@ func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 		return
 	}
 	c.JSON(200, documents)
+}
+
+func (h *DocumentHandler) GetPreview(c *gin.Context) {
+	log.Debug().Msg("Get preview called")
+	id, err := utils.GetParamsAsUUID(c, "id")
+	if err != nil {
+		log.Error().Err(err).Msg("Invalid UUID")
+		c.AbortWithStatus(400)
+		return
+	}
+	first := utils.GetParamAsInt(c, "first", 1)
+	last := utils.GetParamAsInt(c, "last", 10)
+	log.Debug().Msgf("Preview requested for %s, first page: %d, last page: %d", id, first, last)
+
+	previewURLs := h.documentService.GetPreview(id, first, last)
+	c.JSON(200, previewURLs)
 }

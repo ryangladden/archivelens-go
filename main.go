@@ -9,14 +9,6 @@ import (
 	"github.com/ryangladden/archivelens-go/server"
 )
 
-var (
-	s3Endpoint        string
-	s3AccessKeyId     string
-	s3SecretAccessKey string
-	s3BucketName      string
-	s3Location        string
-)
-
 func main() {
 
 	thing := []string{"joe", "mama"}

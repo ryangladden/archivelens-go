@@ -155,6 +155,9 @@ func (s *DocumentService) generateInlinePersonList(persons *[]model.Person) *[]r
 func (s *DocumentService) generateListDocumentsResponse(page *db.DocumentPage) *response.ListDocumentsResponse {
 	var listResponse response.ListDocumentsResponse
 	for _, document := range page.Documents {
+		s3key := fmt.Sprintf("documents/%s/thumb.webp", document.Document.ID)
+		thumb := s.storageManager.GeneratePresignedURL(&s3key)
+		log.Debug().Msg(*thumb)
 		inlineDocument := response.InlineDocument{
 			ID:    document.Document.ID,
 			Title: document.Document.Title,
@@ -165,7 +168,8 @@ func (s *DocumentService) generateListDocumentsResponse(page *db.DocumentPage) *
 				FirstName: document.DocumentMetadata.Author.FirstName,
 				LastName:  document.DocumentMetadata.Author.LastName,
 			},
-			Role: document.Document.Role,
+			Role:      document.Document.Role,
+			Thumbnail: *thumb,
 		}
 		inlineDocument.Persons, inlineDocument.Tags = s.parseSearchMetadata(document)
 		listResponse.Documents = append(listResponse.Documents, inlineDocument)

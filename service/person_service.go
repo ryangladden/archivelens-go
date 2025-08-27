@@ -36,7 +36,7 @@ func (s *PersonService) CreatePerson(request *request.CreatePersonRequest) (uuid
 		return uuid.Nil, errs.ErrDB
 	}
 	if personModel.S3Key != nil {
-		if err = s.storageManager.UploadFile(request.Avatar, *personModel.S3Key); err != nil {
+		if err = s.storageManager.UploadMultipartFile(request.Avatar, *personModel.S3Key); err != nil {
 			return uuid.Nil, errs.ErrStorage
 		}
 	}

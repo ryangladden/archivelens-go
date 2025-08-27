@@ -25,6 +25,8 @@ var (
 	s3Endpoint   string
 	s3BucketName string
 	s3Location   string
+
+	valkeyEndpoint string
 )
 
 type Server struct {

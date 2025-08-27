@@ -21,6 +21,7 @@ type Document struct {
 	Recipient        *Person
 	Role             string
 	Tags             *[]Tag
+	NumberOfPages    int
 }
 
 type Tag struct {

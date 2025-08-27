@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"mime/multipart"
+	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -67,4 +70,23 @@ func GetUserIDFromContext(c *gin.Context) uuid.UUID {
 		}
 	}
 	return uuid.Nil
+}
+
+func ValidateMIMEType(fileHeader *multipart.FileHeader, validTypes []string) bool {
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+	buf := make([]byte, 512)
+	n, _ := file.Read(buf)
+	mimeType := http.DetectContentType(buf[:n])
+	valid := slices.Contains(validTypes, mimeType)
+	if !valid {
+		log.Warn().Msgf("Expected %s but user uploaded %s", validTypes, mimeType)
+	} else {
+		log.Info().Msgf("MIME Type: %s", mimeType)
+	}
+	return valid
 }

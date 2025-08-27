@@ -58,6 +58,7 @@ func (r *Router) registerRoutes() {
 		documents.GET("/:id", r.documentHandler.GetDocument)
 		documents.POST("", r.documentHandler.CreateDocument)
 		documents.GET("", r.documentHandler.ListDocuments)
+		documents.GET("/preview/:id", r.documentHandler.GetPreview)
 		// 	documents.GET("/:id", GetDocument)
 		// 	documents.PATCH("/:id", UpdateDocument)
 		// 	documents.DELETE("/:id", DeleteDocument)

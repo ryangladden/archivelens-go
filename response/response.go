@@ -47,18 +47,18 @@ type InlinePerson struct {
 }
 
 type DocumentResponse struct {
-	ID           uuid.UUID       `json:"id"`
-	Title        string          `json:"title"`
-	Type         string          `json:"type"`
-	Date         *time.Time      `json:"date"`
-	Location     *string         `json:"location"`
-	Author       *InlinePerson   `json:"author"`
-	Coauthors    *[]InlinePerson `json:"coauthors"`
-	Mentions     *[]InlinePerson `json:"mentions"`
-	Recipient    *InlinePerson   `json:"recipient"`
-	Role         string          `json:"role"`
-	PresignedUrl string          `json:"url"`
-	Tags         *[]model.Tag    `json:"tags"`
+	ID        uuid.UUID       `json:"id"`
+	Title     string          `json:"title"`
+	Type      string          `json:"type"`
+	Date      *time.Time      `json:"date"`
+	Location  *string         `json:"location"`
+	Author    *InlinePerson   `json:"author"`
+	Coauthors *[]InlinePerson `json:"coauthors"`
+	Mentions  *[]InlinePerson `json:"mentions"`
+	Recipient *InlinePerson   `json:"recipient"`
+	Role      string          `json:"role"`
+	Tags      *[]model.Tag    `json:"tags"`
+	Pages     []string        `json:"pages"`
 }
 
 type InlineDocument struct {

@@ -3,14 +3,15 @@ package service
 import (
 	"fmt"
 	"math"
+	"path/filepath"
 
-	"github.com/hibiken/asynq"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/ryangladden/archivelens-go/db"
+	"github.com/ryangladden/archivelens-go/microservices"
 	"github.com/ryangladden/archivelens-go/request"
 	"github.com/ryangladden/archivelens-go/response"
 	"github.com/ryangladden/archivelens-go/storage"
-	"github.com/ryangladden/archivelens-go/tasks"
 )
 
 type DocumentService struct {
@@ -31,24 +32,28 @@ func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) 
 	// Move this somewhere else
 	s3key := fmt.Sprintf("/documents/%s/original/%s", document.ID, document.OriginalFilename)
 
-	err := s.storageManager.UploadFile(request.File, s3key)
+	err := s.storageManager.UploadMultipartFile(request.File, s3key)
 
-	// Redis stuff
-	client := asynq.NewClient(asynq.RedisClientOpt{Addr: "localhost:6379"})
-	defer client.Close()
-	task, err := tasks.NewDocumentCreateThumbnailTask(document.ID.String(), document.OriginalFilename)
-	if err != nil {
-		log.Error().Err(err).Msgf("Failed to create a thumbnail task")
-	}
-	info, err := client.Enqueue(task)
-	if err != nil {
-		log.Error().Err(err).Msgf("Failed to enqueue a thumbnail task")
-	}
-	log.Info().Msgf("Enqueued thumbnail task for document %s: id=%s queue=%s", document.ID.String(), info.ID, info.Queue)
+	microservices.NewThumbnailGenerator(s.storageManager).GenerateThumb(document.ID.String(), document.OriginalFilename)
+	pages, _ := microservices.NewPreviewGenerator(s.storageManager).GeneratePreview(document.ID.String(), document.OriginalFilename)
+	log.Debug().Msgf("Number of pages detected: %d", pages)
 
-	if err != nil {
-		return "", err
-	}
+	// // Redis stuff
+	// client := asynq.NewClient(asynq.RedisClientOpt{Addr: "localhost:6379"})
+	// defer client.Close()
+	// task, err := tasks.NewDocumentThumbnailTask(document.ID.String(), document.OriginalFilename)
+	// if err != nil {
+	// 	log.Error().Err(err).Msgf("Failed to create a thumbnail task")
+	// }
+	// info, err := client.Enqueue(task)
+	// if err != nil {
+	// 	log.Error().Err(err).Msgf("Failed to enqueue a thumbnail task")
+	// }
+	// log.Info().Msgf("Enqueued thumbnail task for document %s: id=%s queue=%s", document.ID.String(), info.ID, info.Queue)
+
+	// if err != nil {
+	// 	return "", err
+	// }
 	authorships := generateAuthorshipArray(document.ID.String(), request)
 	err = s.documentDao.CreateDocument(request.Owner, document, authorships)
 	if err != nil {
@@ -88,8 +93,20 @@ func (s *DocumentService) GetDocument(request request.GetDocumentRequest) (*resp
 		Mentions:  s.generateInlinePersonList(document.Mentions),
 		Recipient: s.generateInlinePerson(document.Recipient),
 		Role:      document.Role,
-		// PresignedUrl: *s.storageManager.GeneratePresignedURL(&document.S3Key),
-		Tags: document.Tags,
+		Tags:      document.Tags,
+		Pages:     s.GetPreview(document.ID, 1, 5),
 	}
 	return &response, nil
+}
+
+func (s *DocumentService) GetPreview(id uuid.UUID, first int, last int) []string {
+	key := filepath.Join("documents", id.String(), "preview")
+	var URLs []string
+	for page := first; page <= last; page++ {
+		pageKey := fmt.Sprintf("%s/preview-%03d.png", key, page)
+		log.Debug().Msg(pageKey)
+		URL := s.storageManager.GeneratePresignedURL(&pageKey)
+		URLs = append(URLs, *URL)
+	}
+	return URLs
 }

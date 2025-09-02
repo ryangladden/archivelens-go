@@ -14,26 +14,15 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
-	"github.com/ryangladden/archivelens-go/storage"
 )
 
-type PreviewGenerator struct {
-	storageManager *storage.StorageManager
-}
-
-func NewPreviewGenerator(storageManager *storage.StorageManager) *PreviewGenerator {
-	return &PreviewGenerator{
-		storageManager: storageManager,
-	}
-}
-
-func (p *PreviewGenerator) GeneratePreview(id string, filename string) (int, error) {
-	tmpFile, err := p.storageManager.CreateTempFile(id, "original", filename)
+func (dw *DocumentWorker) GeneratePreview(id string, filename string) (int, error) {
+	tmpFile, err := dw.storageManager.CreateTempFile(id, "original", filename)
 	if err != nil {
 		return 0, err
 	}
 
-	tmpDir, err := p.storageManager.CreateTempDir(id, "preview")
+	tmpDir, err := dw.storageManager.CreateTempDir(id, "preview")
 	if err != nil {
 		return 0, err
 	}
@@ -42,20 +31,22 @@ func (p *PreviewGenerator) GeneratePreview(id string, filename string) (int, err
 	var pages int
 
 	if filepath.Ext(filename) == ".pdf" {
-		pages, err = p.magickPreviewPDF(tmpFile, output, id)
+		pages, err = dw.magickPreviewPDF(tmpFile, output, id)
 	} else {
-		pages, err = p.magickPreviewIMG(tmpFile, output, id)
+		pages, err = dw.magickPreviewIMG(tmpFile, output, id)
 	}
 	if err != nil {
 		return 0, err
 	}
 
+	os.RemoveAll(filepath.Join("/tmp", id))
+
 	return pages, nil
 }
 
-func (p *PreviewGenerator) magickPreviewIMG(input string, output string, id string) (int, error) {
+func (dw *DocumentWorker) magickPreviewIMG(input string, output string, id string) (int, error) {
 
-	output = fmt.Sprintf("%s.png")
+	output += ".png"
 	cmd := exec.Command(
 		"magick",
 		input,
@@ -78,17 +69,15 @@ func (p *PreviewGenerator) magickPreviewIMG(input string, output string, id stri
 	}
 
 	key := filepath.Join("/documents", id, "preview", "preview-001.png")
-	err = p.storageManager.UploadLocalFile(output, key)
+	err = dw.storageManager.UploadLocalFile(output, key)
 	if err != nil {
 		return 0, err
 	}
 
-	os.RemoveAll(filepath.Join("/tmp", id))
-
 	return 1, nil
 }
 
-func (p *PreviewGenerator) magickPreviewPDF(input string, output string, id string) (int, error) {
+func (dw *DocumentWorker) magickPreviewPDF(input string, output string, id string) (int, error) {
 
 	pages, err := getPageNumber(input)
 	if err != nil {
@@ -123,12 +112,12 @@ func (p *PreviewGenerator) magickPreviewPDF(input string, output string, id stri
 			// number := fmt.Sprintf()
 			currentPage := fmt.Sprintf("/tmp/%s/preview/preview-"+numberFormat+".png", id, page)
 			key := fmt.Sprintf("/documents/%s/preview/preview-%03d.png", id, page)
-			err = p.storageManager.UploadLocalFile(currentPage, key)
+			err = dw.storageManager.UploadLocalFile(currentPage, key)
 		}
 	} else {
 		tmpFile := filepath.Join(output, "preview-1.png")
 		key := fmt.Sprintf("/documents/%s/preview/preview-001.png", id)
-		err = p.storageManager.UploadLocalFile(tmpFile, key)
+		err = dw.storageManager.UploadLocalFile(tmpFile, key)
 	}
 
 	if err != nil {

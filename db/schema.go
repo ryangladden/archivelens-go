@@ -19,6 +19,7 @@ func Init(db *pgx.Conn) {
 	createTaggingTable(db)
 	createAuthTable(db)
 	createUsersPersonsTable(db)
+	createDocumentStatusTable(db)
 }
 
 func createDocumentTable(db *pgx.Conn) {
@@ -33,16 +34,6 @@ func createDocumentTable(db *pgx.Conn) {
 		log.Fatal().Err(err).Msg("DB initialization failed to create document_type enum")
 	}
 
-	_, err = db.Exec(context.Background(), `DO $$ BEGIN
-		CREATE TYPE document_status AS ENUM 
-			('pending', 'processing', 'processed', 'failed');
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$;`)
-	if err != nil {
-		log.Fatal().Err(err).Msg("DB initialization failed to create document_status enum")
-	}
-
 	_, err = db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS documents (
 		id uuid NOT NULL,
 		title TEXT NOT NULL,
@@ -51,7 +42,6 @@ func createDocumentTable(db *pgx.Conn) {
 		type document_type NOT NULL,
 		original_filename TEXT NOT NULL,
 		pages SMALLINT,
-		status document_status NOT NULL DEFAULT 'pending',
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
 		PRIMARY KEY (id)
@@ -237,6 +227,29 @@ func createUpdatedAtTrigger(db *pgx.Conn, table string) {
 
 	if err != nil {
 		log.Fatal().Err(err).Msgf("DB initialization failed to create updated_at trigger for %s table", table)
+	}
+}
+
+func createDocumentStatusTable(db *pgx.Conn) {
+
+	_, err := db.Exec(context.Background(), `DO $$ BEGIN
+		CREATE TYPE job_status AS ENUM 
+			('pending', 'processing', 'processed', 'failed');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;`)
+	if err != nil {
+		log.Fatal().Err(err).Msg("DB initialization failed to create job_status enum")
+	}
+
+	_, err = db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS document_status (
+		document_id uuid NOT NULL,
+		thumbnail job_status DEFAULT 'pending',
+		preview job_status DEFAULT 'pending',
+		FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE
+		)`)
+	if err != nil {
+		log.Fatal().Err(err).Msg("DB initialization failed to create document_status table")
 	}
 }
 

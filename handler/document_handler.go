@@ -79,8 +79,7 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 		c.AbortWithStatus(500)
 		return
 	}
-	fmt.Print(uuid)
-	c.JSON(200, gin.H{"form": request})
+	c.JSON(200, gin.H{"id": uuid})
 	// c.JSON(200, gin.H{"title": file.Filename})
 
 }

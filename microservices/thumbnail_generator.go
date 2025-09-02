@@ -7,24 +7,15 @@ import (
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
-	"github.com/ryangladden/archivelens-go/storage"
 )
 
-type ThumbnailGenerator struct {
-	storageManager *storage.StorageManager
-}
-
-func NewThumbnailGenerator(storageManager *storage.StorageManager) *ThumbnailGenerator {
-	return &ThumbnailGenerator{storageManager: storageManager}
-}
-
-func (t *ThumbnailGenerator) GenerateThumb(id string, filename string) error {
-	original, err := t.storageManager.CreateTempFile(id, "original", filename)
+func (dw *DocumentWorker) GenerateThumb(id string, filename string) error {
+	original, err := dw.storageManager.CreateTempFile(id, "original", filename)
 	if err != nil {
 		return err
 	}
 
-	dest, err := t.storageManager.CreateTempDir(id, "thumb")
+	dest, err := dw.storageManager.CreateTempDir(id, "thumb")
 	if err != nil {
 		return err
 	}
@@ -39,7 +30,7 @@ func (t *ThumbnailGenerator) GenerateThumb(id string, filename string) error {
 	}
 
 	key := fmt.Sprintf("/documents/%s/thumb.webp", id)
-	err = t.storageManager.UploadLocalFile(thumb, key)
+	err = dw.storageManager.UploadLocalFile(thumb, key)
 	if err != nil {
 		return err
 	}

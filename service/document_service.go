@@ -8,7 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/ryangladden/archivelens-go/db"
-	"github.com/ryangladden/archivelens-go/microservices"
+	errs "github.com/ryangladden/archivelens-go/err"
+	"github.com/ryangladden/archivelens-go/redis"
 	"github.com/ryangladden/archivelens-go/request"
 	"github.com/ryangladden/archivelens-go/response"
 	"github.com/ryangladden/archivelens-go/storage"
@@ -17,12 +18,14 @@ import (
 type DocumentService struct {
 	documentDao    *db.DocumentDAO
 	storageManager *storage.StorageManager
+	redisClient    *redis.RedisConnection
 }
 
-func NewDocumentService(documentDao *db.DocumentDAO, storageManager *storage.StorageManager) *DocumentService {
+func NewDocumentService(documentDao *db.DocumentDAO, storageManager *storage.StorageManager, redisClient *redis.RedisConnection) *DocumentService {
 	return &DocumentService{
 		documentDao:    documentDao,
 		storageManager: storageManager,
+		redisClient:    redisClient,
 	}
 }
 
@@ -30,36 +33,30 @@ func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) 
 	document := s.generateDocumentModel(request)
 
 	// Move this somewhere else
-	s3key := fmt.Sprintf("/documents/%s/original/%s", document.ID, document.OriginalFilename)
+	// s3key := fmt.Sprintf("/documents/%s/original/%s", document.ID, document.OriginalFilename)
+	s3key := filepath.Join("/documents", document.ID.String(), "original", document.OriginalFilename)
 
 	err := s.storageManager.UploadMultipartFile(request.File, s3key)
+	if err != nil {
+		return "", errs.ErrStorage
+	}
 
-	microservices.NewThumbnailGenerator(s.storageManager).GenerateThumb(document.ID.String(), document.OriginalFilename)
-	pages, _ := microservices.NewPreviewGenerator(s.storageManager).GeneratePreview(document.ID.String(), document.OriginalFilename)
-	log.Debug().Msgf("Number of pages detected: %d", pages)
-
-	// // Redis stuff
-	// client := asynq.NewClient(asynq.RedisClientOpt{Addr: "localhost:6379"})
-	// defer client.Close()
-	// task, err := tasks.NewDocumentThumbnailTask(document.ID.String(), document.OriginalFilename)
-	// if err != nil {
-	// 	log.Error().Err(err).Msgf("Failed to create a thumbnail task")
-	// }
-	// info, err := client.Enqueue(task)
-	// if err != nil {
-	// 	log.Error().Err(err).Msgf("Failed to enqueue a thumbnail task")
-	// }
-	// log.Info().Msgf("Enqueued thumbnail task for document %s: id=%s queue=%s", document.ID.String(), info.ID, info.Queue)
-
-	// if err != nil {
-	// 	return "", err
-	// }
 	authorships := generateAuthorshipArray(document.ID.String(), request)
 	err = s.documentDao.CreateDocument(request.Owner, document, authorships)
 	if err != nil {
 		return "", err
 	}
-	return "", nil
+
+	err = s.redisClient.EnqueueDocumentThumbnail(document.ID.String(), document.OriginalFilename)
+	if err != nil {
+		return "", errs.ErrRedis
+	}
+	err = s.redisClient.EnqueueDocumentPreview(document.ID.String(), document.OriginalFilename)
+	if err != nil {
+		return "", errs.ErrRedis
+	}
+
+	return document.ID.String(), nil
 }
 
 func (s *DocumentService) ListDocuments(request request.ListDocumentsRequest) (*response.ListDocumentsResponse, error) {
@@ -94,7 +91,7 @@ func (s *DocumentService) GetDocument(request request.GetDocumentRequest) (*resp
 		Recipient: s.generateInlinePerson(document.Recipient),
 		Role:      document.Role,
 		Tags:      document.Tags,
-		Pages:     s.GetPreview(document.ID, 1, 5),
+		Pages:     s.GetPreview(document.ID, 1, document.NumberOfPages),
 	}
 	return &response, nil
 }

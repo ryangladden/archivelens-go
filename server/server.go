@@ -8,6 +8,7 @@ import (
 
 	"github.com/ryangladden/archivelens-go/db"
 	"github.com/ryangladden/archivelens-go/handler"
+	"github.com/ryangladden/archivelens-go/redis"
 	"github.com/ryangladden/archivelens-go/routes/v1"
 	"github.com/ryangladden/archivelens-go/service"
 	"github.com/ryangladden/archivelens-go/storage"
@@ -26,12 +27,14 @@ var (
 	s3BucketName string
 	s3Location   string
 
-	valkeyEndpoint string
+	redisEndpoint string
 )
 
 type Server struct {
 	connectionManager *db.ConnectionManager
 	storageManager    *storage.StorageManager
+	redisManager      *redis.RedisConnection
+	redisWorker       *redis.RedisWorker
 
 	// userHandler     *handler.UserHandler
 	authHandler     *handler.AuthHandler
@@ -56,6 +59,7 @@ func NewServer() *Server {
 	connectionManager := db.NewConnectionManager(postgresHost, postgresPort, postgresUsername, postgresPassword, postgresDb)
 	// storageManager := storage.NewStorageManager(s3Endpoint, s3AccessKeyId, s3SecretAccessKey, s3BucketName, s3Location)
 	storageManager := storage.NewStorageManager(s3Endpoint, s3BucketName, s3Location)
+	redisManager := redis.NewRedisConnection(redisEndpoint)
 
 	// userDao := db.NewUserDAO(connectionManager)
 	// userService := service.NewUserService(userDao)
@@ -66,18 +70,21 @@ func NewServer() *Server {
 	authHandler := handler.NewAuthHandler(authService)
 
 	documentDao := db.NewDocumentDAO(connectionManager)
-	documentService := service.NewDocumentService(documentDao, storageManager)
+	documentService := service.NewDocumentService(documentDao, storageManager, redisManager)
 	documentHandler := handler.NewDocumentHandler(documentService)
 
 	personDao := db.NewPersonDAO(connectionManager)
 	personService := service.NewPersonService(personDao, storageManager)
 	personHandler := handler.NewPersonHandler(personService)
 
+	redisWorker := redis.NewRedisWorker(redisEndpoint, storageManager, documentDao)
 	router := routes.NewRouter(authHandler, documentHandler, personHandler)
 
 	return &Server{
 		connectionManager: connectionManager,
 		storageManager:    storageManager,
+		redisManager:      redisManager,
+		redisWorker:       redisWorker,
 
 		// userHandler:     userHandler,
 		authHandler:     authHandler,
@@ -118,4 +125,6 @@ func getEnvironmentVariables() {
 	// s3SecretAccessKey = os.Getenv("S3_SECRET_ACCESS_KEY")
 	s3BucketName = os.Getenv("AWS_BUCKET_NAME")
 	s3Location = os.Getenv("AWS_REGION")
+
+	redisEndpoint = os.Getenv("REDIS_ADDRESS")
 }

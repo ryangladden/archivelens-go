@@ -111,6 +111,15 @@ func (dao *DocumentDAO) CreateDocument(owner uuid.UUID, document *model.Document
 		return err
 	}
 
+	_, err = tx.Exec(ctx,
+		`INSERT INTO document_status
+		(document_id)
+		VALUES ($1)`, document.ID)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to set update document_status for %s", document.ID)
+		return err
+	}
+
 	if err = tx.Commit(ctx); err != nil {
 		return err
 	}
@@ -152,11 +161,11 @@ func (dao *DocumentDAO) GetDocument(userID uuid.UUID, documentID uuid.UUID) (*mo
    			JOIN authorship a ON a.person_id = up.person_id
    			WHERE up.user_id = $1
   		)
-		SELECT d.id, d.title, d.date, d.location, d.type, MIN(ud.role) AS permissions
+		SELECT d.id, d.title, d.date, d.location, d.type, d.pages, MIN(ud.role) AS permissions
 		FROM users_documents ud
 		JOIN documents d ON ud.id = d.id
 		WHERE ud.id = $2
-		GROUP BY d.id`, userID.String(), documentID.String()).Scan(&document.ID, &document.Title, &document.Date, &document.Location, &document.Type, &document.Role)
+		GROUP BY d.id`, userID.String(), documentID.String()).Scan(&document.ID, &document.Title, &document.Date, &document.Location, &document.Type, &document.NumberOfPages, &document.Role)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			log.Info().Msgf("Either document id %s does not exist or user %s does not have permissions to access it", documentID.String(), userID.String())
@@ -197,6 +206,34 @@ func (dao *DocumentDAO) GetDocument(userID uuid.UUID, documentID uuid.UUID) (*mo
 	}
 	log.Debug().Msgf("Document of ID %s:\nTitle: %s\n", documentID.String(), document.Title)
 	return &document, nil
+}
+
+func (dao *DocumentDAO) UpdateDocumentJobStatus(id uuid.UUID, job string, status string) error {
+
+	ctx := context.Background()
+	query := fmt.Sprintf(`UPDATE document_status
+	SET %s = $1
+	WHERE document_id = $2`, job)
+
+	_, err := dao.cm.DB.Exec(ctx, query, status, id)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to update %s status for document %s", job, id.String())
+		return errs.ErrDB
+	}
+	return nil
+}
+
+func (dao *DocumentDAO) UpdateDocument(id uuid.UUID, column string, value string) {
+
+	ctx := context.Background()
+	query := fmt.Sprintf(`UPDATE documents
+	SET %s = $1
+	WHERE id = $2`, column)
+
+	_, err := dao.cm.DB.Exec(ctx, query, value, id)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to set %s column to %s for document %s", column, value, id)
+	}
 }
 
 func (dao *DocumentDAO) personsTagsCTE(filter *model.ListDocumentsFilter) (string, string, string, string) {

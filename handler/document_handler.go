@@ -73,6 +73,7 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 		return
 	}
 	log.Debug().Interface("user", userID)
+	log.Debug().Msgf("Mentions: %s Coauthors: %s", *request.Mentions, *request.Coauthors)
 	request.Owner = userID
 	uuid, err := h.documentService.CreateDocument(request)
 	if err != nil {

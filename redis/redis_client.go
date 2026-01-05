@@ -36,3 +36,13 @@ func (r *RedisConnection) EnqueueDocumentPreview(id string, filename string) err
 	r.client.Enqueue(task)
 	return nil
 }
+
+func (r *RedisConnection) EnqueueDocumentTranscription(id string, filename string) error {
+	task, err := microservices.NewDocumentTranscriptionTask(id, filename)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to enqueue transcription for %s", id)
+		return errs.ErrRedis
+	}
+	r.client.Enqueue(task)
+	return nil
+}

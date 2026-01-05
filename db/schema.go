@@ -126,7 +126,7 @@ func createOwnershipTable(db *pgx.Conn) {
 func createAuthorshipTable(db *pgx.Conn) {
 	_, err := db.Exec(context.Background(), `DO $$ BEGIN
 		CREATE TYPE authorship_enum AS ENUM
-			('author', 'coauthor', 'subject', 'recipient');
+			('author', 'coauthor', 'mentioned', 'recipient');
 		EXCEPTION
 			WHEN duplicate_object THEN null;
 		END $$;`)

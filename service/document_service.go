@@ -55,6 +55,10 @@ func (s *DocumentService) CreateDocument(request request.CreateDocumentRequest) 
 	if err != nil {
 		return "", errs.ErrRedis
 	}
+	err = s.redisClient.EnqueueDocumentTranscription(document.ID.String(), document.OriginalFilename)
+	if err != nil {
+		return "", err
+	}
 
 	return document.ID.String(), nil
 }

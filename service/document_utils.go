@@ -53,10 +53,12 @@ func generateAuthorshipArray(documentId string, request request.CreateDocumentRe
 		authorships = append(authorships, createAuthorship([]string{*request.Author}, documentId, "author")...)
 	}
 	if request.Coauthors != nil {
-		authorships = append(authorships, createAuthorship(*request.Coauthors, documentId, "coauthor")...)
+		coauthors := strings.Split(*request.Coauthors, ",")
+		authorships = append(authorships, createAuthorship(coauthors, documentId, "coauthor")...)
 	}
 	if request.Mentions != nil {
-		authorships = append(authorships, createAuthorship(*request.Mentions, documentId, "subject")...)
+		mentions := strings.Split(*request.Mentions, ",")
+		authorships = append(authorships, createAuthorship(mentions, documentId, "subject")...)
 	}
 	if request.Recipient != nil {
 		authorships = append(authorships, createAuthorship([]string{*request.Recipient}, documentId, "recipient")...)

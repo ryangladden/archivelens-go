@@ -55,8 +55,6 @@ func (dw *DocumentWorker) magickPreviewIMG(input string, output string, id strin
 		"-background",
 		"white",
 		"-flatten",
-		"-crop",
-		"600x370+0+0",
 		output,
 	)
 
@@ -106,19 +104,19 @@ func (dw *DocumentWorker) magickPreviewPDF(input string, output string, id strin
 		log.Error().Err(err).Msg("Poppler failed to convert PDF to PNG")
 	}
 
-	if pages > 1 {
-		// filename := fmt.Sprintf("preview-%s.png", numberFormat)
-		for page := 1; page <= pages; page++ {
-			// number := fmt.Sprintf()
-			currentPage := fmt.Sprintf("/tmp/%s/preview/preview-"+numberFormat+".png", id, page)
-			key := fmt.Sprintf("/documents/%s/preview/preview-%03d.png", id, page)
-			err = dw.storageManager.UploadLocalFile(currentPage, key)
-		}
-	} else {
-		tmpFile := filepath.Join(output, "preview-1.png")
-		key := fmt.Sprintf("/documents/%s/preview/preview-001.png", id)
-		err = dw.storageManager.UploadLocalFile(tmpFile, key)
+	// if pages > 1 {
+	// filename := fmt.Sprintf("preview-%s.png", numberFormat)
+	for page := 1; page <= pages; page++ {
+		// number := fmt.Sprintf()
+		currentPage := fmt.Sprintf("/tmp/%s/preview/preview-"+numberFormat+".png", id, page)
+		key := fmt.Sprintf("/documents/%s/preview/preview-%03d.png", id, page)
+		err = dw.storageManager.UploadLocalFile(currentPage, key)
 	}
+	// } else {
+	// 	tmpFile := filepath.Join(output, "preview-1.png")
+	// 	key := fmt.Sprintf("/documents/%s/preview/preview-001.png", id)
+	// 	err = dw.storageManager.UploadLocalFile(tmpFile, key)
+	// }
 
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to upload temp file(s) %s-*", output)

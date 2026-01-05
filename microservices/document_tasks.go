@@ -3,7 +3,11 @@ package microservices
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"path/filepath"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -32,6 +36,11 @@ const (
 	TypeDocumentTranscribeWritten = "document:transcribe:htr"
 )
 
+var (
+	WrittenDocuments = []string{".pdf", ".jpg", ".jpeg", ".png"}
+	AudioDocuments   = []string{".wav", ".mp3", ".m4a", ".aac", ".ogg", ".opus"}
+)
+
 type DocumentPayload struct {
 	ID               string
 	OriginalFilename string
@@ -57,7 +66,7 @@ func NewDocumentThumbnailTask(resourceID string, originalFilename string) (*asyn
 
 func (dw *DocumentWorker) HandleDocumentThumbnailTask(ctx context.Context, t *asynq.Task) error {
 
-	p, err := unmarshalPayload(t)
+	p, err := dw.unmarshalPayload(t)
 	if err != nil {
 		return err
 	}
@@ -87,7 +96,7 @@ func NewDocumentPreviewTask(resourceID string, originalFilename string) (*asynq.
 }
 
 func (dw *DocumentWorker) HandleDocumentPreviewTask(ctx context.Context, t *asynq.Task) error {
-	p, err := unmarshalPayload(t)
+	p, err := dw.unmarshalPayload(t)
 	if err != nil {
 		return err
 	}
@@ -113,6 +122,22 @@ func (dw *DocumentWorker) HandleDocumentPreviewTask(ctx context.Context, t *asyn
 	return nil
 }
 
+func NewDocumentTranscriptionTask(resourceID string, originalFilename string) (*asynq.Task, error) {
+	payload, err := marshalPayload(resourceID, originalFilename)
+	if err != nil {
+		return nil, err
+	}
+
+	extension := strings.ToLower(filepath.Ext(originalFilename))
+	if slices.Contains(WrittenDocuments, extension) {
+		return asynq.NewTask(TypeDocumentTranscribeWritten, payload), nil
+	} else if slices.Contains(AudioDocuments, extension) {
+		return asynq.NewTask(TypeDocumentTranscribeAudio, payload), nil
+	}
+
+	return nil, fmt.Errorf("unsupported file extension: %s", extension)
+}
+
 func marshalPayload(resourceID string, originalFilename string) ([]byte, error) {
 	payload, err := json.Marshal(DocumentPayload{
 		ID:               resourceID,
@@ -122,10 +147,11 @@ func marshalPayload(resourceID string, originalFilename string) ([]byte, error) 
 		log.Error().Err(err).Msgf("Failed to generate document payload for resource %s", resourceID)
 		return nil, err
 	}
+
 	return payload, nil
 }
 
-func unmarshalPayload(t *asynq.Task) (*DocumentPayload, error) {
+func (dw *DocumentWorker) unmarshalPayload(t *asynq.Task) (*DocumentPayload, error) {
 	var p DocumentPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		log.Error().Err(err).Msgf("json.Unmarshal failed: %v: %s", err, asynq.SkipRetry)

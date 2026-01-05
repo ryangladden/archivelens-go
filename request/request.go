@@ -23,8 +23,8 @@ type CreateDocumentRequest struct {
 	Title     string                `form:"title" binding:"required"`
 	Type      string                `form:"type" binding:"required"`
 	Author    *string               `form:"author"`
-	Coauthors *[]string             `form:"coauthors"`
-	Mentions  *[]string             `form:"mentions"`
+	Coauthors *string               `form:"coauthors"`
+	Mentions  *string               `form:"mentions"`
 	Recipient *string               `form:"recipient"`
 	Date      *time.Time            `form:"date" time_format:"2006-01-02" time_utc:"1"`
 	Location  *string               `form:"location"`

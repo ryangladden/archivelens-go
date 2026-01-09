@@ -159,17 +159,17 @@ func (s *DocumentService) generateListDocumentsResponse(page *db.DocumentPage) *
 	for _, document := range page.Documents {
 		s3key := fmt.Sprintf("documents/%s/thumb.webp", document.Document.ID)
 		thumb := s.storageManager.GeneratePresignedURL(&s3key)
-		log.Debug().Msg(*thumb)
+		inlineAuthor := s.generateInlinePerson(document.Document.Author)
+		if inlineAuthor != nil {
+			log.Debug().Msg(*inlineAuthor.FirstName)
+		}
+
 		inlineDocument := response.InlineDocument{
-			ID:    document.Document.ID,
-			Title: document.Document.Title,
-			Date:  document.Document.Date,
-			Type:  document.Document.Type,
-			Author: &response.InlinePerson{
-				ID:        document.DocumentMetadata.Author.ID,
-				FirstName: document.DocumentMetadata.Author.FirstName,
-				LastName:  document.DocumentMetadata.Author.LastName,
-			},
+			ID:        document.Document.ID,
+			Title:     document.Document.Title,
+			Date:      document.Document.Date,
+			Type:      document.Document.Type,
+			Author:    s.generateInlinePerson(document.Document.Author),
 			Role:      document.Document.Role,
 			Thumbnail: *thumb,
 		}
